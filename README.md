@@ -2,3 +2,33 @@
 
 Iridium is an in-process compiler testing framework for Kotlin using the Kotlin embeddable compiler and Kotlin Test.  
 It allows testing compiler behaviour and FIR/IR compiler plugins.
+
+### Test DSL for reports, FIR and IR
+
+```kotlin
+@Test
+fun `My compiler IR test`() = runCompilerTest {
+    source = """
+        @Suppress("UNCHECKED_CAST")
+        fun <T> test(value: T): T = value
+        fun main(args: Array<String>) {
+            println("Hello, World")
+        }
+    """.trimIndent() // *1
+    compiler shouldNotReport { error() }
+    result irMatches {
+        element.getChild<IrFunction> { it.name.asString() == "main" }.matches("main") {
+            returns { unit() }
+            hasValueParameter("args") { type(types.stringType.array()) }
+        }
+        element.getChild<IrFunction> { it.name.asString() == "test" }.matches("test") {
+            hasAnnotation(type("kotlin/Suppress"))
+            hasTypeParameter("T")
+            returns { typeParameter("T") }
+            hasValueParameter("value") { typeParameter("T") }
+        }
+        containsChild<IrCall> { it.target.name.asString() == "println" }
+    }
+}
+```
+***1: The source code assigned in the multiline string will have highlighting in supported IDEs.**

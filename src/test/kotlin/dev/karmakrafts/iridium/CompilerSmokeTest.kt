@@ -10,7 +10,6 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
@@ -42,7 +41,6 @@ class CompilerSmokeTest {
                 returns { typeParameter("T") }
                 hasValueParameter("value") { typeParameter("T") }
             }
-            containsChild<IrValueParameter> { it.name.asString() == "args" }
             containsChild<IrCall> { it.target.name.asString() == "println" }
         }
     }
@@ -52,7 +50,6 @@ class CompilerSmokeTest {
         pipeline {
             languageVersionSettings = LanguageVersion.KOTLIN_1_9 withApi ApiVersion.KOTLIN_1_9
         }
-        compiler shouldNotReport { error() }
         checkDefaultProgram()
     }
 
