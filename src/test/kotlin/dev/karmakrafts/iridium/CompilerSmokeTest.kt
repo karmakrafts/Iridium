@@ -1,0 +1,119 @@
+package dev.karmakrafts.iridium
+
+import dev.karmakrafts.iridium.matcher.hasAnnotation
+import dev.karmakrafts.iridium.matcher.hasTypeParameter
+import dev.karmakrafts.iridium.matcher.hasValueParameter
+import dev.karmakrafts.iridium.matcher.returns
+import dev.karmakrafts.iridium.pipeline.withApi
+import dev.karmakrafts.iridium.util.getChild
+import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
+import org.jetbrains.kotlin.ir.util.target
+import org.junit.jupiter.api.Test
+
+@OptIn(UnsafeDuringIrConstructionAPI::class)
+class CompilerSmokeTest {
+    @Language("kotlin")
+    private val defaultProgram: String = """
+        @Suppress("UNCHECKED_CAST")
+        fun <T> test(value: T): T = value
+        fun main(args: Array<String>) {
+            println("Hello, World")
+        }
+    """.trimIndent()
+
+    private fun CompilerTestScope.checkDefaultProgram() {
+        source = defaultProgram
+        compiler shouldNotReport { error() }
+        result irMatches {
+            element.getChild<IrFunction> { it.name.asString() == "main" }.matches("main") {
+                returns { unit() }
+                hasValueParameter("args") { type(types.stringType.array()) }
+            }
+            element.getChild<IrFunction> { it.name.asString() == "test" }.matches("test") {
+                hasAnnotation(type("kotlin/Suppress"))
+                hasTypeParameter("T")
+                returns { typeParameter("T") }
+                hasValueParameter("value") { typeParameter("T") }
+            }
+            containsChild<IrValueParameter> { it.name.asString() == "args" }
+            containsChild<IrCall> { it.target.name.asString() == "println" }
+        }
+    }
+
+    @Test
+    fun `Compile simple Kotlin program with older API`() = runCompilerTest {
+        pipeline {
+            languageVersionSettings = LanguageVersion.KOTLIN_1_9 withApi ApiVersion.KOTLIN_1_9
+        }
+        compiler shouldNotReport { error() }
+        checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile simple Kotlin program with newer API`() = runCompilerTest {
+        pipeline {
+            languageVersionSettings = LanguageVersion.KOTLIN_2_2 withApi ApiVersion.KOTLIN_2_2
+        }
+        checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile simple Kotlin program`() = runCompilerTest {
+        checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile Kotlin program with error`() = runCompilerTest {
+        source = """
+            fun main(args: Array<IDoNotExist>) {
+                println("Hello, World", TESTING)
+            }
+        """.trimIndent()
+
+        compiler shouldReport {
+            error()
+            messageWith("IDoNotExist")
+            atLine(1)
+            inColumn(22)
+        } atLeast 1
+
+        compiler shouldReport {
+            error()
+            messageWith("TESTING")
+            atLine(2)
+            inColumn(29)
+        } atLeast 1
+    }
+
+    @Test
+    fun `Compile simple Kotlin program with Java APIs`() = runCompilerTest {
+        source = """
+            import java.lang.Thread
+            private fun threadMain() {
+                for (number in 0..<10000) {
+                    println(number)
+                }
+            }
+            fun main(args: Array<String>) {   
+                val threads = ArrayList<Thread>()
+                for (i in 0..<10) {
+                    threads += Thread(::threadMain)
+                }
+                threads.forEach(Thread::join)
+            }
+        """.trimIndent()
+
+        compiler shouldNotReport { error() }
+
+        result irMatches {
+            containsChild<IrFunctionReference> { it.reflectionTarget!!.owner.name.asString() == "join" }
+        }
+    }
+}
