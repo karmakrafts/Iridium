@@ -17,6 +17,7 @@
 package dev.karmakrafts.iridium.pipeline
 
 import dev.karmakrafts.iridium.util.CompilerMessageCallback
+import dev.karmakrafts.iridium.util.DefaultFirExtensionRegistrar
 import dev.karmakrafts.iridium.util.DelegatingIrGenerationExtension
 import dev.karmakrafts.iridium.util.IrGenerationCallback
 import org.jetbrains.annotations.TestOnly
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import java.io.File
 import kotlin.reflect.KFunction
@@ -64,6 +66,11 @@ class CompilerPipelineBuilder @PublishedApi @TestOnly internal constructor() {
     fun firExtensionRegistrar(registrar: FirExtensionRegistrar) {
         check(registrar !in firExtensionRegistrars) { "FIR extension registrar is already added" }
         firExtensionRegistrars += registrar
+    }
+
+    @TestOnly
+    fun firExtension(extension: FirDeclarationGenerationExtension) {
+        firExtensionRegistrar(DefaultFirExtensionRegistrar(extension))
     }
 
     @TestOnly

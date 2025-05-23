@@ -1,7 +1,9 @@
 import dev.karmakrafts.conventions.GitLabCI
+import dev.karmakrafts.conventions.apache2License
 import dev.karmakrafts.conventions.configureJava
 import dev.karmakrafts.conventions.defaultDependencyLocking
 import dev.karmakrafts.conventions.setProjectInfo
+import dev.karmakrafts.conventions.setRepository
 import dev.karmakrafts.conventions.signPublications
 
 plugins {
@@ -10,6 +12,7 @@ plugins {
     signing
     `maven-publish`
     alias(libs.plugins.karmaConventions)
+    alias(libs.plugins.gradleNexus)
 }
 
 group = "dev.karmakrafts.iridium"
@@ -33,6 +36,8 @@ tasks {
 
 publishing {
     setProjectInfo(rootProject.name, "Testing framework for Kotlin compiler plugins using a custom compiler driver.")
+    setRepository("gitlab.com/karmakrafts/iridium")
+    apache2License()
     with(GitLabCI) { karmaKraftsDefaults() }
 }
 

@@ -21,11 +21,9 @@ import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 
 internal class DefaultFirExtensionRegistrar @TestOnly constructor(
-    val declarationGenerationExtensions: List<FirDeclarationGenerationExtension>
+    val extension: FirDeclarationGenerationExtension
 ) : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {
-        for (extension in declarationGenerationExtensions) {
-
-        }
+        +FirDeclarationGenerationExtension.Factory { extension }
     }
 }

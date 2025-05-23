@@ -24,9 +24,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-@PublishedApi
 @OptIn(ExperimentalAtomicApi::class)
-internal class RecordingMessageCollector @TestOnly constructor(
+class RecordingMessageCollector @TestOnly constructor(
     private val callback: CompilerMessageCallback = CompilerMessageCallback {}
 ) : MessageCollector {
     val messages: ConcurrentLinkedQueue<CompilerMessage> = ConcurrentLinkedQueue()

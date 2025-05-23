@@ -75,16 +75,11 @@ class CompilerPipeline @TestOnly internal constructor(
     private val compilerConfiguration: CompilerConfiguration,
     messageCallback: CompilerMessageCallback = CompilerMessageCallback {}
 ) : AutoCloseable {
-    @PublishedApi
-    internal val disposable: Disposable = Disposer.newDisposable()
-
-    @PublishedApi
-    internal val messageCollector: RecordingMessageCollector = RecordingMessageCollector(messageCallback).apply {
+    private val disposable: Disposable = Disposer.newDisposable()
+    val messageCollector: RecordingMessageCollector = RecordingMessageCollector(messageCallback).apply {
         compilerConfiguration.messageCollector = this
     }
-
-    @PublishedApi
-    internal val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
+    val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
 
     private val environment: KotlinCoreEnvironment = createEnvironment()
     private inline val project: Project get() = environment.project
@@ -94,8 +89,7 @@ class CompilerPipeline @TestOnly internal constructor(
     private val globalSearchScope: GlobalSearchScope = GlobalSearchScope.allScope(project)
     private val fileSearchScope: PsiBasedProjectFileSearchScope = PsiBasedProjectFileSearchScope(globalSearchScope)
 
-    @PublishedApi
-    internal val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
+    private val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
     private val sessionProvider: FirProjectSessionProvider = FirProjectSessionProvider()
     private val kotlinBuiltIns: JvmBuiltIns = JvmBuiltIns(storageManager, JvmBuiltIns.Kind.FROM_CLASS_LOADER)
 
@@ -104,9 +98,7 @@ class CompilerPipeline @TestOnly internal constructor(
     @Suppress("UNUSED")
     private val libSession: FirSession = createLibrarySession()
     private val moduleData: FirModuleDataImpl = createModuleData("test", listOf(libModuleData))
-
-    @PublishedApi
-    internal val moduleSession: FirSession = createModuleSession()
+    private val moduleSession: FirSession = createModuleSession()
 
     private fun createModuleSession(): FirSession = FirJvmSessionFactory.createModuleBasedSession(
         sessionProvider = sessionProvider,
@@ -165,8 +157,7 @@ class CompilerPipeline @TestOnly internal constructor(
         platform = JvmPlatforms.defaultJvmPlatform
     )
 
-    @PublishedApi
-    internal fun createComponentStorage( // @formatter:off
+    private fun createComponentStorage( // @formatter:off
         files: List<FirFile>,
         scopeSession: ScopeSession
     ): Pair<Fir2IrComponentsStorage, Fir2IrSyntheticIrBuiltinsSymbolsContainer> { // @formatter:on

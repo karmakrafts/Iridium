@@ -3,6 +3,34 @@
 Iridium is an in-process compiler testing framework for Kotlin using the Kotlin embeddable compiler and Kotlin Test.  
 It allows testing compiler behaviour and FIR/IR compiler plugins.
 
+### How to use it
+
+First, add the official Maven Central repository to your `settings.gradle.kts`:
+
+```kotlin
+pluginManagement {
+    repositories {
+        maven("https://central.sonatype.com/repository/maven-snapshots")
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven("https://central.sonatype.com/repository/maven-snapshots")
+        mavenCentral()
+    }
+}
+```
+
+Then add a dependency on the library in your root buildscript:
+
+```kotlin
+dependencies {
+    testImplementation("dev.karmakrafts.iridium:iridium:<version>")
+}
+```
+
 ### Test DSL for reports, FIR and IR
 
 ```kotlin
@@ -31,4 +59,4 @@ fun `My compiler IR test`() = runCompilerTest {
     }
 }
 ```
-***1: The source code assigned in the multiline string will have highlighting in supported IDEs.**
+**\*1: The source code assigned in the multiline string will have highlighting in supported IDEs.**
