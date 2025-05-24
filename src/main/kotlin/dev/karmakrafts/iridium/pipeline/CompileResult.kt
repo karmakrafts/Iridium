@@ -17,17 +17,42 @@
 package dev.karmakrafts.iridium.pipeline
 
 import dev.karmakrafts.iridium.util.CompilerMessage
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
+/**
+ * Represents the result of a Kotlin compilation process.
+ *
+ * This class contains all the artifacts and information produced during compilation,
+ * including the original source code, the FIR (Frontend IR) representation,
+ * the IR (Intermediate Representation) module, compilation messages, and the plugin context.
+ */
 @ConsistentCopyVisibility
 @CompilerPipelineDsl
-data class CompileResult @PublishedApi @TestOnly internal constructor(
+data class CompileResult @PublishedApi internal constructor(
+    /**
+     * The original Kotlin source code that was compiled.
+     */
     val source: String,
+
+    /**
+     * The FIR (Frontend IR) file representation of the compiled code.
+     */
     val firFile: FirFile,
+
+    /**
+     * The IR module fragment containing the compiled code.
+     */
     val module: IrModuleFragment,
+
+    /**
+     * List of compiler messages (warnings, errors, etc.) generated during compilation.
+     */
     val messages: List<CompilerMessage>,
+
+    /**
+     * The IR plugin context that can be used by compiler plugins.
+     */
     val pluginContext: IrPluginContext
 )

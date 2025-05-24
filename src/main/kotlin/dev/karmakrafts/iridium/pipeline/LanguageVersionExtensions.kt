@@ -21,6 +21,20 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 
+/**
+ * Creates a [LanguageVersionSettingsImpl] with the given language version and API version.
+ *
+ * This extension function provides a convenient way to create language version settings
+ * by combining a language version with an API version using an infix notation.
+ *
+ * Example usage:
+ * ```
+ * val settings = LanguageVersion.KOTLIN_1_9 withApi ApiVersion.KOTLIN_1_9
+ * ```
+ *
+ * @param version The API version to use
+ * @return A new [LanguageVersionSettingsImpl] with the specified language and API versions
+ */
 @TestOnly
 infix fun LanguageVersion.withApi(version: ApiVersion): LanguageVersionSettingsImpl = LanguageVersionSettingsImpl(
     languageVersion = this, apiVersion = version

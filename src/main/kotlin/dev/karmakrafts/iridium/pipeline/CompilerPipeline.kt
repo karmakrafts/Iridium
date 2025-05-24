@@ -20,7 +20,6 @@ import dev.karmakrafts.iridium.util.CompilerMessageCallback
 import dev.karmakrafts.iridium.util.DelegatingDiagnosticsReporter
 import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltIns
@@ -68,10 +67,36 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
 
-class CompilerPipeline @TestOnly internal constructor(
+/**
+ * A compiler pipeline that handles the compilation of Kotlin source code.
+ *
+ * This class provides a complete pipeline for compiling Kotlin source code, including:
+ * - Setting up the compilation environment
+ * - Parsing the source code
+ * - Resolving and checking the FIR (Frontend IR) representation
+ * - Converting FIR to IR (Intermediate Representation)
+ * - Running IR extensions
+ * - Collecting compiler messages
+ *
+ * The pipeline supports customization through FIR and IR extensions, language version settings,
+ * and compiler configuration.
+ */
+class CompilerPipeline internal constructor(
+    /**
+     * The language version settings to use for compilation.
+     */
     val languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
+
+    /**
+     * The list of FIR extension registrars to use during compilation.
+     */
     val firExtensions: List<FirExtensionRegistrar> = emptyList(),
+
+    /**
+     * The list of IR generation extensions to use during compilation.
+     */
     val irExtensions: List<IrGenerationExtension> = emptyList(),
+
     private val compilerConfiguration: CompilerConfiguration,
     messageCallback: CompilerMessageCallback = CompilerMessageCallback {}
 ) : AutoCloseable {
@@ -178,7 +203,20 @@ class CompilerPipeline @TestOnly internal constructor(
         ) to syntheticSymbolContainer
     }
 
-    @TestOnly
+    /**
+     * Compiles the given Kotlin source code and returns the compilation result.
+     *
+     * This method performs the following steps:
+     * 1. Creates a PSI file from the source code
+     * 2. Builds, resolves, and checks the FIR representation
+     * 3. Creates the component storage for FIR to IR conversion
+     * 4. Generates the IR module fragment
+     * 5. Runs all registered IR extensions on the module
+     * 6. Returns a [CompileResult] containing all compilation artifacts
+     *
+     * @param source The Kotlin source code to compile
+     * @return A [CompileResult] containing the compilation artifacts and messages
+     */
     fun run(@Language("kotlin") source: String = ""): CompileResult {
         val input = psiFactory.createPhysicalFile("dummy.kt", source)
         val (_, scopeSession, files) = buildResolveAndCheckFirFromKtFiles( // @formatter:off
@@ -209,7 +247,11 @@ class CompilerPipeline @TestOnly internal constructor(
         )
     }
 
-    @TestOnly
+    /**
+     * Closes this compiler pipeline and disposes of all resources.
+     *
+     * This method should be called when the pipeline is no longer needed to free up resources.
+     */
     override fun close() {
         Disposer.dispose(disposable)
     }

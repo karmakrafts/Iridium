@@ -21,6 +21,20 @@ import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoot
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import java.io.File
 
+/**
+ * Adds a JVM classpath root to the compiler configuration based on the location of a specified type.
+ *
+ * This extension function determines the location of the JAR file or directory containing
+ * the specified type and adds it to the classpath of the compiler configuration.
+ * This is useful for ensuring that the compiler can find and use classes from specific libraries.
+ *
+ * Example usage:
+ * ```
+ * compilerConfiguration.addJvmClasspathRootByType<MyClass>()
+ * ```
+ *
+ * @param T The type whose location should be added to the classpath
+ */
 @TestOnly
 inline fun <reified T : Any> CompilerConfiguration.addJvmClasspathRootByType() {
     addJvmClasspathRoot(File(T::class.java.protectionDomain.codeSource.location.toURI()))

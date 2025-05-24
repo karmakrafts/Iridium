@@ -32,13 +32,25 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import java.io.File
 import kotlin.reflect.KFunction
 
+/**
+ * DSL marker annotation for the compiler pipeline DSL.
+ *
+ * This annotation is used to mark classes that are part of the compiler pipeline DSL,
+ * helping the compiler to provide better type checking and IDE support for the DSL.
+ */
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS)
 internal annotation class CompilerPipelineDsl @TestOnly constructor()
 
+/**
+ * Builder class for creating [CompilerPipeline] instances using a DSL-style syntax.
+ *
+ * This class provides methods for configuring various aspects of the compiler pipeline,
+ * such as language version settings, compiler configuration, and extensions.
+ */
 @CompilerPipelineDsl
-class CompilerPipelineBuilder @PublishedApi @TestOnly internal constructor() {
+class CompilerPipelineBuilder @PublishedApi internal constructor() {
     private val irExtensions: ArrayList<IrGenerationExtension> = ArrayList()
     private val firExtensionRegistrars: ArrayList<FirExtensionRegistrar> = ArrayList()
 
@@ -48,42 +60,78 @@ class CompilerPipelineBuilder @PublishedApi @TestOnly internal constructor() {
     @PublishedApi
     internal val compilerConfig: CompilerConfiguration = CompilerConfiguration()
 
-    @get:TestOnly
-    @set:TestOnly
+    /**
+     * The language version settings to use for compilation.
+     */
     var languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT
 
-    @TestOnly
+    /**
+     * Registers a callback for compiler messages.
+     *
+     * @param callback The callback to register
+     */
     fun onMessage(callback: CompilerMessageCallback) {
         messageCallback += callback
     }
 
-    @TestOnly
+    /**
+     * Configures the compiler configuration using a DSL-style block.
+     *
+     * @param block The configuration block
+     */
     inline fun config(block: CompilerConfiguration.() -> Unit) {
         compilerConfig.block()
     }
 
-    @TestOnly
+    /**
+     * Registers a FIR extension registrar.
+     *
+     * @param registrar The FIR extension registrar to register
+     * @throws IllegalStateException if the registrar is already registered
+     */
     fun firExtensionRegistrar(registrar: FirExtensionRegistrar) {
         check(registrar !in firExtensionRegistrars) { "FIR extension registrar is already added" }
         firExtensionRegistrars += registrar
     }
 
-    @TestOnly
+    /**
+     * Registers a FIR declaration generation extension.
+     *
+     * This method wraps the extension in a [DefaultFirExtensionRegistrar] and registers it.
+     *
+     * @param extension The FIR declaration generation extension to register
+     */
     fun firExtension(extension: FirDeclarationGenerationExtension) {
         firExtensionRegistrar(DefaultFirExtensionRegistrar(extension))
     }
 
-    @TestOnly
+    /**
+     * Registers an IR generation extension.
+     *
+     * @param extension The IR generation extension to register
+     * @throws IllegalStateException if the extension is already registered
+     */
     fun irExtension(extension: IrGenerationExtension) {
         check(extension !in irExtensions) { "IR extension is already registered" }
         irExtensions += extension
     }
 
-    @TestOnly
+    /**
+     * Registers an IR generation callback.
+     *
+     * This method wraps the callback in a [DelegatingIrGenerationExtension] and registers it.
+     *
+     * @param callback The IR generation callback to register
+     */
     fun irExtension(callback: IrGenerationCallback) {
         irExtension(DelegatingIrGenerationExtension(callback))
     }
 
+    /**
+     * Builds a [CompilerPipeline] instance with the current configuration.
+     *
+     * @return A new [CompilerPipeline] instance
+     */
     @PublishedApi
     internal fun build(): CompilerPipeline = CompilerPipeline(
         languageVersionSettings = languageVersionSettings,
@@ -94,8 +142,26 @@ class CompilerPipelineBuilder @PublishedApi @TestOnly internal constructor() {
     )
 }
 
+/**
+ * Type alias for a function that configures a [CompilerPipelineBuilder].
+ *
+ * This is used as the receiver for the DSL-style configuration of a compiler pipeline.
+ */
 typealias CompilerPipelineSpec = CompilerPipelineBuilder.() -> Unit
 
+/**
+ * Applies a default configuration to a [CompilerPipelineBuilder].
+ *
+ * This function sets up a basic configuration for testing purposes, including:
+ * - Enabling FIR
+ * - Setting the module name
+ * - Disabling incremental compilation
+ * - Enabling Java compilation
+ * - Setting the JDK home
+ * - Adding necessary classpath roots
+ *
+ * @param moduleName The name of the module to use in the configuration
+ */
 @TestOnly
 fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
     config {
@@ -109,6 +175,15 @@ fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
     }
 }
 
+/**
+ * Creates a [CompilerPipeline] with the given configuration.
+ *
+ * This function provides a DSL-style way to create and configure a compiler pipeline.
+ * By default, it applies the [defaultPipelineSpec] configuration.
+ *
+ * @param block The configuration block to apply to the pipeline builder
+ * @return A configured [CompilerPipeline] instance
+ */
 @TestOnly
 inline fun compilerPipeline(block: CompilerPipelineSpec = { defaultPipelineSpec() }): CompilerPipeline {
     return CompilerPipelineBuilder().apply(block).build()
