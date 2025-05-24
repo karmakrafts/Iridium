@@ -16,7 +16,6 @@
 
 package dev.karmakrafts.iridium.util
 
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -25,7 +24,7 @@ typealias IrGenerationCallback = (
     moduleFragment: IrModuleFragment, pluginContext: IrPluginContext
 ) -> Unit
 
-internal class DelegatingIrGenerationExtension @TestOnly constructor(
+internal class DelegatingIrGenerationExtension(
     val callback: IrGenerationCallback
 ) : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {

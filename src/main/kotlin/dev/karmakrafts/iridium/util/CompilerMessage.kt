@@ -16,24 +16,40 @@
 
 package dev.karmakrafts.iridium.util
 
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 
+/**
+ * Represents a compiler message with severity, content, and optional source location.
+ * This class is used to encapsulate compiler diagnostic information in a structured way.
+ *
+ * @property severity The severity level of the compiler message (e.g., ERROR, WARNING, INFO)
+ * @property message The textual content of the compiler message
+ * @property location Optional source location information where the message originated
+ */
 @ConsistentCopyVisibility
-data class CompilerMessage @TestOnly internal constructor( // @formatter:off
+data class CompilerMessage internal constructor( // @formatter:off
     val severity: CompilerMessageSeverity,
     val message: String,
     val location: CompilerMessageSourceLocation?
 ) // @formatter:on
 
+/**
+ * A function type that receives a [CompilerMessage] and performs some action with it.
+ * Used as a raw callback mechanism for compiler message handling.
+ */
 typealias RawCompilerMessageCallback = (CompilerMessage) -> Unit
 
+/**
+ * A wrapper around [RawCompilerMessageCallback] that provides additional functionality.
+ * This value class allows for composition of callbacks through the plus operator.
+ *
+ * @property value The underlying raw callback function
+ */
 @Suppress("NOTHING_TO_INLINE")
 @JvmInline
 value class CompilerMessageCallback(val value: RawCompilerMessageCallback) {
     @PublishedApi
-    @TestOnly
     internal inline operator fun plus(other: CompilerMessageCallback): CompilerMessageCallback =
         CompilerMessageCallback { message ->
             value(message)
@@ -41,23 +57,31 @@ value class CompilerMessageCallback(val value: RawCompilerMessageCallback) {
         }
 
     @PublishedApi
-    @TestOnly
     internal inline operator fun invoke(message: CompilerMessage) = value(message)
 }
 
+/**
+ * A function type that evaluates a [CompilerMessage] and returns a boolean result.
+ * Used as a filtering mechanism for compiler messages.
+ */
 typealias RawCompilerMessageFilter = (CompilerMessage) -> Boolean
 
+/**
+ * A wrapper around [RawCompilerMessageFilter] that provides additional functionality.
+ * This value class allows for composition of filters through the plus operator,
+ * where multiple filters are combined with logical AND.
+ *
+ * @property value The underlying raw filter function
+ */
 @Suppress("NOTHING_TO_INLINE")
 @JvmInline
 value class CompilerMessageFilter(val value: RawCompilerMessageFilter) {
     @PublishedApi
-    @TestOnly
     internal inline operator fun plus(other: CompilerMessageFilter): CompilerMessageFilter =
         CompilerMessageFilter { message ->
             value(message) && other(message)
         }
 
     @PublishedApi
-    @TestOnly
     internal inline operator fun invoke(message: CompilerMessage): Boolean = value(message)
 }

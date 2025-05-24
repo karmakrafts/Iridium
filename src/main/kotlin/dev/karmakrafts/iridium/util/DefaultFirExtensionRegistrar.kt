@@ -16,11 +16,10 @@
 
 package dev.karmakrafts.iridium.util
 
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 
-internal class DefaultFirExtensionRegistrar @TestOnly constructor(
+internal class DefaultFirExtensionRegistrar(
     val extension: FirDeclarationGenerationExtension
 ) : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {

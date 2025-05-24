@@ -24,20 +24,51 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+/**
+ * A message collector implementation that records compiler messages for later processing.
+ * This class implements the [MessageCollector] interface from the Kotlin compiler API
+ * and provides additional functionality for storing and processing compiler messages.
+ *
+ * @property callback An optional callback that is invoked whenever a message is reported
+ */
 @OptIn(ExperimentalAtomicApi::class)
-class RecordingMessageCollector @TestOnly constructor(
+class RecordingMessageCollector internal constructor(
     private val callback: CompilerMessageCallback = CompilerMessageCallback {}
 ) : MessageCollector {
+    /**
+     * A thread-safe queue containing all recorded compiler messages.
+     */
     val messages: ConcurrentLinkedQueue<CompilerMessage> = ConcurrentLinkedQueue()
+
+    /**
+     * Atomic flag indicating whether any error messages have been reported.
+     */
     private var hasErrors: AtomicBoolean = AtomicBoolean(false)
 
+    /**
+     * Clears all recorded messages and resets the error flag.
+     */
     override fun clear() {
         messages.clear()
         hasErrors.store(false)
     }
 
+    /**
+     * Checks if any error messages have been reported.
+     *
+     * @return True if at least one error message has been reported, false otherwise
+     */
     override fun hasErrors(): Boolean = hasErrors.load()
 
+    /**
+     * Reports a new compiler message.
+     * The message is added to the queue, the callback is invoked, and the error flag
+     * is updated if the message has error severity.
+     *
+     * @param severity The severity level of the message
+     * @param message The textual content of the message
+     * @param location Optional source location information
+     */
     override fun report(
         severity: CompilerMessageSeverity, message: String, location: CompilerMessageSourceLocation?
     ) {
@@ -47,6 +78,10 @@ class RecordingMessageCollector @TestOnly constructor(
         if (severity.isError) hasErrors.store(true)
     }
 
+    /**
+     * Prints all error messages to standard error.
+     * This method is intended for testing purposes only.
+     */
     @TestOnly
     fun printErrors() {
         val errors = messages.filter { it.severity.isError }
