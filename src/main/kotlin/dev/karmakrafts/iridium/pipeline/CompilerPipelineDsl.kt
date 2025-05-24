@@ -41,7 +41,7 @@ import kotlin.reflect.KFunction
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS)
-internal annotation class CompilerPipelineDsl @TestOnly constructor()
+internal annotation class CompilerPipelineDsl
 
 /**
  * Builder class for creating [CompilerPipeline] instances using a DSL-style syntax.

@@ -20,14 +20,27 @@ import dev.karmakrafts.iridium.matcher.IncompleteMessageMatcher
 import dev.karmakrafts.iridium.matcher.IncompleteMessageMatcherSpec
 import dev.karmakrafts.iridium.matcher.MessageMatcher
 import dev.karmakrafts.iridium.pipeline.CompileResult
-import org.jetbrains.annotations.TestOnly
 
+/**
+ * A class for asserting expectations about compiler diagnostic messages.
+ * 
+ * This class is part of the compiler testing DSL and allows test authors to specify
+ * which diagnostic messages should or should not be reported during compilation.
+ */
 @CompilerTestDsl
-class CompilerAsserter @TestOnly internal constructor() {
+class CompilerAsserter internal constructor() {
+    /**
+     * Internal list of message matchers that will be used to verify compilation results.
+     */
     @PublishedApi
     internal val messageMatchers: ArrayList<MessageMatcher> = ArrayList()
 
-    @TestOnly
+    /**
+     * Specifies that a particular diagnostic message should be reported during compilation.
+     *
+     * @param spec A specification that configures what kind of message to expect
+     * @return A [MessageMatcher] that can be further configured with occurrence expectations
+     */
     inline infix fun shouldReport(spec: IncompleteMessageMatcherSpec): MessageMatcher {
         val messageMatcher = IncompleteMessageMatcher()
         messageMatcher.spec()
@@ -36,12 +49,22 @@ class CompilerAsserter @TestOnly internal constructor() {
         return matcher
     }
 
-    @TestOnly
+    /**
+     * Specifies that a particular diagnostic message should not be reported during compilation.
+     *
+     * This is a convenience method equivalent to `shouldReport(spec) exactly 0`.
+     *
+     * @param spec A specification that configures what kind of message should not appear
+     */
     inline infix fun shouldNotReport(crossinline spec: IncompleteMessageMatcherSpec) {
         shouldReport(spec) exactly 0
     }
 
-    @TestOnly
+    /**
+     * Asserts that all registered message matchers match against the given compilation result.
+     *
+     * @param result The compilation result to check against the registered matchers
+     */
     internal fun assert(result: CompileResult) {
         for (matcher in messageMatchers) {
             matcher(result.messages)

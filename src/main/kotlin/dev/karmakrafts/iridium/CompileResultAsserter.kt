@@ -19,30 +19,51 @@ package dev.karmakrafts.iridium
 import dev.karmakrafts.iridium.matcher.FirElementMatcher
 import dev.karmakrafts.iridium.matcher.IrElementMatcher
 import dev.karmakrafts.iridium.pipeline.CompileResult
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
+/**
+ * A class for asserting expectations about the structure of compilation results.
+ * 
+ * This class is part of the compiler testing DSL and allows test authors to verify
+ * the structure of FIR (Frontend IR) and IR (Intermediate Representation) elements
+ * produced during compilation.
+ */
 @CompilerTestDsl
-class CompileResultAsserter @TestOnly internal constructor() {
+class CompileResultAsserter internal constructor() {
+    /**
+     * Internal list of assertion functions that will be applied to compilation results.
+     */
     @PublishedApi
     internal val assertions: ArrayList<(CompileResult) -> Unit> = ArrayList()
 
-    @TestOnly
+    /**
+     * Specifies assertions about the FIR (Frontend IR) elements in the compilation result.
+     *
+     * @param block A lambda that configures matchers for FIR elements
+     */
     inline infix fun firMatches(block: FirElementMatcher<FirFile>.() -> Unit) {
         assertions += { result ->
             FirElementMatcher("file", result.firFile).block()
         }
     }
 
-    @TestOnly
+    /**
+     * Specifies assertions about the IR (Intermediate Representation) elements in the compilation result.
+     *
+     * @param block A lambda that configures matchers for IR elements
+     */
     inline infix fun irMatches(block: IrElementMatcher<IrModuleFragment>.() -> Unit) {
         assertions += { result ->
             IrElementMatcher("module", result.module, result.pluginContext).block()
         }
     }
 
-    @TestOnly
+    /**
+     * Asserts that all registered assertions match against the given compilation result.
+     *
+     * @param result The compilation result to check against the registered assertions
+     */
     internal fun assert(result: CompileResult) {
         for (assertion in assertions) {
             assertion(result)

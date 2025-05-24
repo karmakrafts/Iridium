@@ -20,31 +20,55 @@ import dev.karmakrafts.iridium.pipeline.CompilerPipelineSpec
 import dev.karmakrafts.iridium.pipeline.compilerPipeline
 import dev.karmakrafts.iridium.pipeline.defaultPipelineSpec
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.TestOnly
 import kotlin.time.TimeSource
 
+/**
+ * Marks classes and functions that are part of the compiler testing DSL.
+ *
+ * This annotation is used to provide type safety and better IDE support for the DSL.
+ * It helps prevent accidental misuse of DSL elements outside their intended context.
+ */
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-internal annotation class CompilerTestDsl @TestOnly constructor()
+internal annotation class CompilerTestDsl
 
+/**
+ * The main scope class for compiler tests.
+ *
+ * This class provides the context in which compiler tests are defined. It holds
+ * the test configuration, including source code to compile, pipeline configuration,
+ * and assertions about compilation results.
+ */
 @CompilerTestDsl
-class CompilerTestScope @PublishedApi @TestOnly internal constructor() {
-    @get:TestOnly
+class CompilerTestScope @PublishedApi internal constructor() {
+    /**
+     * Provides access to the compiler asserter for specifying expectations about compiler messages.
+     */
     val compiler: CompilerAsserter = CompilerAsserter()
 
-    @get:TestOnly
+    /**
+     * Provides access to the result asserter for specifying expectations about compilation results.
+     */
     val result: CompileResultAsserter = CompileResultAsserter()
 
+    /**
+     * Internal specification for the compiler pipeline configuration.
+     */
     @PublishedApi
     internal var pipelineSpec: CompilerPipelineSpec = { defaultPipelineSpec() }
 
-    @get:TestOnly
-    @set:TestOnly
+    /**
+     * The Kotlin source code to be compiled during the test.
+     */
     @Language("kotlin")
     var source: String = ""
 
-    @TestOnly
+    /**
+     * Configures the compiler pipeline for this test.
+     *
+     * @param block A lambda that configures the compiler pipeline
+     */
     inline fun pipeline(crossinline block: CompilerPipelineSpec) {
         val previousSpec = pipelineSpec
         pipelineSpec = {
@@ -53,6 +77,12 @@ class CompilerTestScope @PublishedApi @TestOnly internal constructor() {
         }
     }
 
+    /**
+     * Evaluates the test by compiling the source code and verifying all assertions.
+     *
+     * This method creates a compiler pipeline according to the configured specification,
+     * compiles the source code, and applies all registered assertions to the compilation result.
+     */
     @PublishedApi
     internal fun evaluate() {
         compilerPipeline(pipelineSpec).use { pipeline ->
@@ -78,7 +108,14 @@ class CompilerTestScope @PublishedApi @TestOnly internal constructor() {
     }
 }
 
-@TestOnly
+/**
+ * Runs a compiler test with the given configuration.
+ *
+ * This function is the main entry point for the compiler testing DSL. It creates a test scope,
+ * applies the provided configuration, and evaluates the test.
+ *
+ * @param scope A lambda that configures the test using the DSL
+ */
 inline fun runCompilerTest(scope: CompilerTestScope.() -> Unit) {
     val scope = CompilerTestScope()
     scope.scope()
