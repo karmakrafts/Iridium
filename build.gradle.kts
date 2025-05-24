@@ -34,6 +34,7 @@ dependencies {
     api(libs.kotlin.stdlib)
     api(libs.kotlin.reflect)
     api(libs.kotlin.test)
+    api(libs.annotations)
 }
 
 tasks {

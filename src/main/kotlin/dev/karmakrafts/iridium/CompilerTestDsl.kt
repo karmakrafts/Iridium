@@ -58,11 +58,19 @@ class CompilerTestScope @PublishedApi internal constructor() {
     @PublishedApi
     internal var pipelineSpec: CompilerPipelineSpec = { defaultPipelineSpec() }
 
+    private var source: String = ""
+
     /**
-     * The Kotlin source code to be compiled during the test.
+     * Sets the Kotlin source code to be compiled and tested.
+     *
+     * This method specifies the source code that will be passed to the compiler pipeline
+     * during test evaluation. The source code is expected to be valid Kotlin code.
+     *
+     * @param source The Kotlin source code as a string
      */
-    @Language("kotlin")
-    var source: String = ""
+    fun source(@Language("kotlin") source: String) {
+        this.source = source
+    }
 
     /**
      * Configures the compiler pipeline for this test.

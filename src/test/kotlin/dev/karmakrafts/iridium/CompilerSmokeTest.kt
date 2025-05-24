@@ -28,7 +28,7 @@ class CompilerSmokeTest {
     """.trimIndent()
 
     private fun CompilerTestScope.checkDefaultProgram() {
-        source = defaultProgram
+        source(defaultProgram)
         compiler shouldNotReport { error() }
         result irMatches {
             element.getChild<IrFunction> { it.name.asString() == "main" }.matches("main") {
@@ -68,11 +68,11 @@ class CompilerSmokeTest {
 
     @Test
     fun `Compile Kotlin program with error`() = runCompilerTest {
-        source = """
+        source("""
             fun main(args: Array<IDoNotExist>) {
                 println("Hello, World", TESTING)
             }
-        """.trimIndent()
+        """.trimIndent())
 
         compiler shouldReport {
             error()
@@ -91,7 +91,7 @@ class CompilerSmokeTest {
 
     @Test
     fun `Compile simple Kotlin program with Java APIs`() = runCompilerTest {
-        source = """
+        source("""
             import java.lang.Thread
             private fun threadMain() {
                 for (number in 0..<10000) {
@@ -105,7 +105,7 @@ class CompilerSmokeTest {
                 }
                 threads.forEach(Thread::join)
             }
-        """.trimIndent()
+        """.trimIndent())
 
         compiler shouldNotReport { error() }
 
