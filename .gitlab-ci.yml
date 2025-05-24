@@ -34,7 +34,7 @@ variables:
 
 # ------------------------------ Security
 
-security:dependencies:
+security:
   stage: security
   interruptible: true
   needs: [ ]
@@ -77,7 +77,7 @@ build:
 
 # ------------------------------ Publish
 
-publish:artifacts:
+publish:
   stage: publish
   rules:
     - *if-main

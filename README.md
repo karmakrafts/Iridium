@@ -42,13 +42,13 @@ dependencies {
 ```kotlin
 @Test
 fun `My compiler IR test`() = runCompilerTest {
-    source = """
+    source("""
         @Suppress("UNCHECKED_CAST")
         fun <T> test(value: T): T = value
         fun main(args: Array<String>) {
             println("Hello, World")
         }
-    """.trimIndent() // *1
+    """.trimIndent()) // *1
     compiler shouldNotReport { error() }
     result irMatches {
         element.getChild<IrFunction> { it.name.asString() == "main" }.matches("main") {

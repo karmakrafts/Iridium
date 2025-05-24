@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
 /**
  * A class for asserting expectations about the structure of compilation results.
- * 
+ *
  * This class is part of the compiler testing DSL and allows test authors to verify
  * the structure of FIR (Frontend IR) and IR (Intermediate Representation) elements
  * produced during compilation.

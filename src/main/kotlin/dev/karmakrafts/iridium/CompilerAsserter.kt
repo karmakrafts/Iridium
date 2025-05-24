@@ -23,7 +23,7 @@ import dev.karmakrafts.iridium.pipeline.CompileResult
 
 /**
  * A class for asserting expectations about compiler diagnostic messages.
- * 
+ *
  * This class is part of the compiler testing DSL and allows test authors to specify
  * which diagnostic messages should or should not be reported during compilation.
  */

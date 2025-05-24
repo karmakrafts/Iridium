@@ -107,8 +107,7 @@ class CompilerTestScope @PublishedApi internal constructor() {
             try {
                 compiler.assert(result)
                 this.result.assert(result)
-            }
-            catch (error: Throwable) {
+            } catch (error: Throwable) {
                 messageCollector.printErrors()
                 throw error
             }
