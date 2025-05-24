@@ -18,39 +18,78 @@ package dev.karmakrafts.iridium.matcher
 
 import dev.karmakrafts.iridium.CompilerTestDsl
 import dev.karmakrafts.iridium.util.CompilerMessage
-import org.jetbrains.annotations.TestOnly
 
+/**
+ * A matcher that asserts the number of compiler messages matching specific criteria.
+ *
+ * This class works in conjunction with [IncompleteMessageMatcher] to provide a fluent DSL
+ * for asserting both the content and quantity of compiler messages. After specifying what
+ * messages to match using [IncompleteMessageMatcher], this class allows specifying how many
+ * such messages are expected.
+ *
+ * Example usage:
+ * ```
+ * compiler shouldReport {
+ *     message("Type mismatch")
+ *     error()
+ *     atLine(10)
+ * } between 1..3
+ * ```
+ */
 @CompilerTestDsl
 @Suppress("NOTHING_TO_INLINE")
-class MessageMatcher @PublishedApi @TestOnly internal constructor( // @formatter:off
+class MessageMatcher @PublishedApi internal constructor( // @formatter:off
     private val parentMatcher: IncompleteMessageMatcher
 ) { // @formatter:on
+    /**
+     * The range of acceptable message counts. By default, expects at least one message.
+     */
     @PublishedApi
-    @get:TestOnly
-    @set:TestOnly
     internal var range: IntRange = 1..Int.MAX_VALUE
 
-    @TestOnly
+    /**
+     * Specifies that the number of matching messages should be within the given range.
+     *
+     * @param range The range of acceptable message counts
+     */
     inline infix fun between(range: IntRange) {
         this.range = range
     }
 
-    @TestOnly
+    /**
+     * Specifies that there should be at least the given number of matching messages.
+     *
+     * @param count The minimum number of expected messages
+     */
     inline infix fun atLeast(count: Int) {
         range = count..range.last
     }
 
-    @TestOnly
+    /**
+     * Specifies that there should be at most the given number of matching messages.
+     *
+     * @param count The maximum number of expected messages
+     */
     inline infix fun atMost(count: Int) {
         range = range.first..count
     }
 
-    @TestOnly
+    /**
+     * Specifies that there should be exactly the given number of matching messages.
+     *
+     * @param count The exact number of expected messages
+     */
     inline infix fun exactly(count: Int) {
         range = count..count
     }
 
-    @TestOnly
+    /**
+     * Checks if the number of matching messages in the given list is within the expected range.
+     * If not, an assertion error is thrown with a descriptive message.
+     *
+     * @param messages The list of compiler messages to check
+     * @throws AssertionError if the number of matching messages is not within the expected range
+     */
     internal operator fun invoke(messages: List<CompilerMessage>) {
         val count = messages.count(parentMatcher::invoke)
         if (count in range) return

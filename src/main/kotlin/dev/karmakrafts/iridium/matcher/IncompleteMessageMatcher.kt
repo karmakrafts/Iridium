@@ -19,88 +19,149 @@ package dev.karmakrafts.iridium.matcher
 import dev.karmakrafts.iridium.CompilerTestDsl
 import dev.karmakrafts.iridium.util.CompilerMessage
 import dev.karmakrafts.iridium.util.CompilerMessageFilter
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 
+/**
+ * A matcher for compiler messages that provides a DSL for asserting properties of compiler messages.
+ * This class is used in compiler tests to verify the content, severity, location, and other properties
+ * of compiler messages produced during compilation.
+ *
+ * The matcher accumulates conditions that are used to filter compiler messages, and provides
+ * a human-readable description of these conditions for use in assertion messages.
+ */
 @CompilerTestDsl
-class IncompleteMessageMatcher @PublishedApi @TestOnly internal constructor() {
+class IncompleteMessageMatcher @PublishedApi internal constructor() {
     internal var condition: CompilerMessageFilter = CompilerMessageFilter { true }
     internal val conditions: ArrayList<String> = ArrayList()
 
-    @TestOnly
+    /**
+     * Matches any compiler message regardless of content or properties.
+     * This is useful when you want to assert that any message exists.
+     */
     fun anyMessage() {
         condition += CompilerMessageFilter { true }
         conditions += "match any message"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages with exactly the specified message text.
+     *
+     * @param message The exact message text to match
+     */
     fun message(message: String) {
         condition += CompilerMessageFilter { it.message == message }
         conditions += "equal '$message'"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages that contain the specified substring.
+     *
+     * @param messageSubstring The substring to look for in the message text
+     */
     fun messageWith(messageSubstring: String) {
         condition += CompilerMessageFilter { messageSubstring in it.message }
         conditions += "contain '$messageSubstring'"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages that do not contain the specified substring.
+     *
+     * @param messageSubstring The substring that should not be present in the message text
+     */
     fun messageWithout(messageSubstring: String) {
         condition += CompilerMessageFilter { messageSubstring !in it.message }
         conditions += "do not contain '$messageSubstring'"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages with the specified severity.
+     *
+     * @param severity The compiler message severity to match
+     */
     fun withSeverity(severity: CompilerMessageSeverity) {
         condition += CompilerMessageFilter { it.severity == severity }
         conditions += "have the severity $severity"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages with INFO severity.
+     * These are informational messages that don't indicate problems.
+     */
     fun info() {
         condition += CompilerMessageFilter { it.severity == CompilerMessageSeverity.INFO }
         conditions += "report an information"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages with LOGGING severity.
+     * These are verbose logging messages typically used for debugging.
+     */
     fun verbose() {
         condition += CompilerMessageFilter { it.severity == CompilerMessageSeverity.LOGGING }
         conditions += "report a verbose information"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages with ERROR severity.
+     * These indicate compilation errors that prevent successful compilation.
+     */
     fun error() {
         condition += CompilerMessageFilter { it.severity.isError }
         conditions += "report an error"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages with WARNING severity.
+     * These indicate potential problems that don't prevent compilation.
+     */
     fun warning() {
         condition += CompilerMessageFilter { it.severity.isWarning }
         conditions += "report a warning"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages that are reported at the specified line number.
+     *
+     * @param line The line number to match
+     */
     fun atLine(line: Int) {
         condition += CompilerMessageFilter { it.location?.line == line }
         conditions += "are at line $line"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages that are reported at the specified column number.
+     *
+     * @param column The column number to match
+     */
     fun inColumn(column: Int) {
         condition += CompilerMessageFilter { it.location?.column == column }
         conditions += "are in column $column"
     }
 
-    @TestOnly
+    /**
+     * Matches compiler messages that are reported from a file with the specified name.
+     * This matches files whose path ends with the specified string.
+     *
+     * @param file The file name or path suffix to match
+     */
     fun fromFile(file: String) {
         condition += CompilerMessageFilter { it.location?.path?.endsWith(file) == true }
         conditions += "are in file $file"
     }
 
-    @TestOnly
+    /**
+     * Checks if the given compiler message matches all the conditions defined in this matcher.
+     * This operator allows the matcher to be used as a function.
+     *
+     * @param message The compiler message to check
+     * @return true if the message matches all conditions, false otherwise
+     */
     operator fun invoke(message: CompilerMessage): Boolean = condition(message)
 }
 
+/**
+ * A type alias for a function that configures an IncompleteMessageMatcher.
+ * This is used in the DSL to provide a concise way to specify message matching criteria.
+ */
 typealias IncompleteMessageMatcherSpec = IncompleteMessageMatcher.() -> Unit

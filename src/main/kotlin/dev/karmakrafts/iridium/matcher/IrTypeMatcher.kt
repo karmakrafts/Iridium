@@ -18,7 +18,6 @@ package dev.karmakrafts.iridium.matcher
 
 import dev.karmakrafts.iridium.CompilerTestDsl
 import dev.karmakrafts.iridium.util.renderIrTree
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.ir.IrElement
@@ -27,25 +26,91 @@ import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.render
 
+/**
+ * A matcher for IR types that provides a DSL for asserting properties of IR types in compiler tests.
+ *
+ * This class is used to verify that IR types in the compiler's intermediate representation match
+ * expected types. It provides methods for checking against common Kotlin types (primitives, arrays,
+ * standard library types) as well as custom type parameters.
+ *
+ * Example usage:
+ * ```
+ * type matches {
+ *     int() // Asserts the type is Int
+ * }
+ * ```
+ *
+ * @param TYPE The specific IrType subclass being matched
+ */
+
 @OptIn(UnsafeDuringIrConstructionAPI::class)
 @CompilerTestDsl
-class IrTypeMatcher<TYPE : IrType> @PublishedApi @TestOnly internal constructor( // @formatter:off
+class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @formatter:off
     private val type: TYPE,
     private val parentElement: IrElement,
     override val pluginContext: IrPluginContext
 ) : IrTypeAwareMatcher() { // @formatter:on
+    /**
+     * Asserts that the underlying type of the current type matches the expected type.
+     * This performs a comparison on the type ignoring nullability.
+     *
+     * @param expected The expected IR type to match against
+     * @throws AssertionError if the types don't match, with a detailed error message showing the IR tree
+     */
     fun type(expected: IrType) {
+        assert(type.type == expected) {
+            "Expected type ${expected.render()} but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
+        }
+    }
+
+    /**
+     * Asserts that the current type strictly equals the expected type.
+     * This performs a direct equality check on the type including nullability.
+     *
+     * @param expected The expected IR type to strictly match against
+     * @throws AssertionError if the types don't match exactly, with a detailed error message showing the IR tree
+     */
+    fun strictType(expected: IrType) {
         assert(type == expected) {
             "Expected type ${expected.render()} but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
         }
     }
 
+    /**
+     * Asserts that the current type is a type parameter with the specified name.
+     *
+     * @param name The expected name of the type parameter
+     * @throws AssertionError if the type is not a type parameter or has a different name
+     */
     fun typeParameter(name: String) {
         assert(type.isTypeParameter() && (type.classifierOrFail as IrTypeParameterSymbol).owner.name.asString() == name) {
             "Expected type parameter '$name' but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
+        }
+    }
+
+    /**
+     * Asserts that the current type is nullable.
+     *
+     * @throws AssertionError if the type is not nullable, with a detailed error message showing the IR tree
+     */
+    fun nullable() {
+        assert(type.isNullable()) {
+            "Expected type to be nullable but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
+        }
+    }
+
+    /**
+     * Asserts that the current type is non-null (not nullable).
+     *
+     * @throws AssertionError if the type is nullable, with a detailed error message showing the IR tree
+     */
+    fun nonNull() {
+        assert(!type.isNullable()) {
+            "Expected type to be nonnull but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
         }
     }
 
