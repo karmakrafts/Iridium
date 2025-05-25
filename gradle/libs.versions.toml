@@ -1,13 +1,14 @@
 [versions]
 java = "17"
 
-iridium = "1.1.4"
+iridium = "1.2.0"
 kotlin = "2.1.21" # https://github.com/JetBrains/kotlin/releases
 dokka = "2.0.0" # https://github.com/Kotlin/dokka/releases
 karmaConventions = "1.3.18"
 gradleNexus = "2.0.0" # https://github.com/gradle-nexus/publish-plugin/releases
 junit = "5.12.2" # https://github.com/junit-team/junit5/releases
 annotations = "26.0.2" # https://github.com/JetBrains/java-annotations/releases
+oshi = "6.8.1"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -16,6 +17,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
+oshi-core = { module = "com.github.oshi:oshi-core", version.ref = "oshi" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

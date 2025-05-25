@@ -29,9 +29,6 @@ import dev.karmakrafts.iridium.pipeline.CompileResult
  */
 @CompilerTestDsl
 class CompilerAsserter internal constructor() {
-    /**
-     * Internal list of message matchers that will be used to verify compilation results.
-     */
     @PublishedApi
     internal val messageMatchers: ArrayList<MessageMatcher> = ArrayList()
 
@@ -60,14 +57,13 @@ class CompilerAsserter internal constructor() {
         shouldReport(spec) exactly 0
     }
 
-    /**
-     * Asserts that all registered message matchers match against the given compilation result.
-     *
-     * @param result The compilation result to check against the registered matchers
-     */
     internal fun assert(result: CompileResult) {
         for (matcher in messageMatchers) {
             matcher(result.messages)
         }
+    }
+
+    fun reset() {
+        messageMatchers.clear()
     }
 }

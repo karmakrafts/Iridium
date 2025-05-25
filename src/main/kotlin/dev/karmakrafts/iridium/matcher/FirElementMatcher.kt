@@ -47,7 +47,11 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @param block The lambda containing assertions to apply to the element
      */
     inline fun <reified T : FirElement> T.matches(name: String, block: FirElementMatcher<T>.() -> Unit) {
-        FirElementMatcher(name, this, depth + 1).block()
+        try {
+            FirElementMatcher(name, this, depth + 1).block()
+        } catch (error: Throwable) {
+            throw AssertionError("$scopeName (${element::class.java.simpleName}/$depth)\n", error)
+        }
     }
 
     /**
@@ -70,7 +74,12 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @throws AssertionError if no matching child is found
      */
     inline fun <reified T : FirElement> containsChild(crossinline predicate: (T) -> Boolean = { true }) {
-        assert(element.hasChild<T>(predicate)) { "Expected child in element in $scopeName:\n\n${element.renderFirTree()}\n" }
+        val result = try {
+            element.hasChild<T>(predicate)
+        } catch (error: Throwable) {
+            throw AssertionError("$scopeName (${element::class.java.simpleName}/$depth)\n", error)
+        }
+        assert(result) { "Expected child in element in $scopeName:\n\n${element.renderFirTree()}\n" }
     }
 
     /**
@@ -82,6 +91,11 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @throws AssertionError if a matching child is found
      */
     inline fun <reified T : FirElement> containsNoChild(crossinline predicate: (T) -> Boolean = { true }) {
-        assert(!element.hasChild<T>(predicate)) { "Expected no child in element in $scopeName:\n\n${element.renderFirTree()}\n" }
+        val result = try {
+            !element.hasChild<T>(predicate)
+        } catch (error: Throwable) {
+            throw AssertionError("$scopeName (${element::class.java.simpleName}/$depth)\n", error)
+        }
+        assert(result) { "Expected no child in element in $scopeName:\n\n${element.renderFirTree()}\n" }
     }
 }

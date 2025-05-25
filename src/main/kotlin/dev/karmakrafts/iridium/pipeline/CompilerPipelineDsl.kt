@@ -61,6 +61,14 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
     internal val compilerConfig: CompilerConfiguration = CompilerConfiguration()
 
     /**
+     * The target platform to compile the code for.
+     * 
+     * This property determines which platform (JVM, JS, Native, WASM) the code will be compiled for.
+     * Default is JVM.
+     */
+    var target: CompileTarget = CompileTarget.JVM
+
+    /**
      * The language version settings to use for compilation.
      */
     var languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT
@@ -134,6 +142,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      */
     @PublishedApi
     internal fun build(): CompilerPipeline = CompilerPipeline(
+        compileTarget = target,
         languageVersionSettings = languageVersionSettings,
         firExtensions = firExtensionRegistrars,
         irExtensions = irExtensions,

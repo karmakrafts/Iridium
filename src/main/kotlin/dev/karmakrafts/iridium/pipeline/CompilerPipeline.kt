@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.config.messageCollector
+import org.jetbrains.kotlin.config.moduleName
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirModuleDataImpl
@@ -62,7 +63,6 @@ import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
@@ -82,6 +82,11 @@ import org.jetbrains.kotlin.storage.StorageManager
  * and compiler configuration.
  */
 class CompilerPipeline internal constructor(
+    /**
+     * The target platform to compile the test code for.
+     */
+    val compileTarget: CompileTarget,
+
     /**
      * The language version settings to use for compilation.
      */
@@ -118,11 +123,12 @@ class CompilerPipeline internal constructor(
     private val sessionProvider: FirProjectSessionProvider = FirProjectSessionProvider()
     private val kotlinBuiltIns: JvmBuiltIns = JvmBuiltIns(storageManager, JvmBuiltIns.Kind.FROM_CLASS_LOADER)
 
-    private val libModuleData: FirModuleDataImpl = createModuleData("test-lib")
+    private val libModuleData: FirModuleDataImpl = createModuleData("${compilerConfiguration.moduleName!!}-lib")
 
     @Suppress("UNUSED")
     private val libSession: FirSession = createLibrarySession()
-    private val moduleData: FirModuleDataImpl = createModuleData("test", listOf(libModuleData))
+    private val moduleData: FirModuleDataImpl =
+        createModuleData(compilerConfiguration.moduleName!!, listOf(libModuleData))
     private val moduleSession: FirSession = createModuleSession()
 
     private fun createModuleSession(): FirSession = FirJvmSessionFactory.createModuleBasedSession(
@@ -179,7 +185,7 @@ class CompilerPipeline internal constructor(
         dependencies = dependencies,
         dependsOnDependencies = emptyList(),
         friendDependencies = emptyList(),
-        platform = JvmPlatforms.defaultJvmPlatform
+        platform = compileTarget.platform
     )
 
     private fun createComponentStorage( // @formatter:off
@@ -217,8 +223,10 @@ class CompilerPipeline internal constructor(
      * @param source The Kotlin source code to compile
      * @return A [CompileResult] containing the compilation artifacts and messages
      */
-    fun run(@Language("kotlin") source: String = ""): CompileResult {
-        val input = psiFactory.createPhysicalFile("dummy.kt", source)
+    fun run(
+        @Language("kotlin") source: String = "", fileName: String = "test.kt"
+    ): CompileResult {
+        val input = psiFactory.createPhysicalFile(fileName, source)
         val (_, scopeSession, files) = buildResolveAndCheckFirFromKtFiles( // @formatter:off
             session = moduleSession,
             ktFiles = listOf(input),

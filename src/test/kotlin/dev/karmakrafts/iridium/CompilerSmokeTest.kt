@@ -4,6 +4,8 @@ import dev.karmakrafts.iridium.matcher.hasAnnotation
 import dev.karmakrafts.iridium.matcher.hasTypeParameter
 import dev.karmakrafts.iridium.matcher.hasValueParameter
 import dev.karmakrafts.iridium.matcher.returns
+import dev.karmakrafts.iridium.pipeline.CompileTarget
+import dev.karmakrafts.iridium.pipeline.defaultPipelineSpec
 import dev.karmakrafts.iridium.pipeline.withApi
 import dev.karmakrafts.iridium.util.getChild
 import org.intellij.lang.annotations.Language
@@ -28,6 +30,9 @@ class CompilerSmokeTest {
     """.trimIndent()
 
     private fun CompilerTestScope.checkDefaultProgram() {
+        pipeline {
+            defaultPipelineSpec()
+        }
         source(defaultProgram)
         compiler shouldNotReport { error() }
         result irMatches {
@@ -43,6 +48,43 @@ class CompilerSmokeTest {
             }
             containsChild<IrCall> { it.target.name.asString() == "println" }
         }
+    }
+
+    @Test
+    fun `Compile Kotlin JVM program`() = runCompilerTest {
+        checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile Kotlin JS program`() = runCompilerTest {
+        pipeline {
+            target = CompileTarget.JS
+        }
+        checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile Kotlin Native program`() = runCompilerTest {
+        pipeline {
+            target = CompileTarget.NATIVE
+        }
+        checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile Kotlin WASM JS program`() = runCompilerTest {
+        pipeline {
+            target = CompileTarget.WASM_JS
+        }
+        checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile Kotlin WASM WASI program`() = runCompilerTest {
+        pipeline {
+            target = CompileTarget.WASM_WASI
+        }
+        checkDefaultProgram()
     }
 
     @Test
@@ -62,25 +104,23 @@ class CompilerSmokeTest {
     }
 
     @Test
-    fun `Compile simple Kotlin program`() = runCompilerTest {
-        checkDefaultProgram()
-    }
-
-    @Test
     fun `Compile Kotlin program with error`() = runCompilerTest {
-        source("""
+        pipeline {
+            defaultPipelineSpec()
+        }
+        source(
+            """
             fun main(args: Array<IDoNotExist>) {
                 println("Hello, World", TESTING)
             }
-        """.trimIndent())
-
+        """.trimIndent()
+        )
         compiler shouldReport {
             error()
             messageWith("IDoNotExist")
             atLine(1)
             inColumn(22)
         } atLeast 1
-
         compiler shouldReport {
             error()
             messageWith("TESTING")
@@ -91,7 +131,11 @@ class CompilerSmokeTest {
 
     @Test
     fun `Compile simple Kotlin program with Java APIs`() = runCompilerTest {
-        source("""
+        pipeline {
+            defaultPipelineSpec()
+        }
+        source(
+            """
             import java.lang.Thread
             private fun threadMain() {
                 for (number in 0..<10000) {
@@ -105,10 +149,9 @@ class CompilerSmokeTest {
                 }
                 threads.forEach(Thread::join)
             }
-        """.trimIndent())
-
+        """.trimIndent()
+        )
         compiler shouldNotReport { error() }
-
         result irMatches {
             containsChild<IrFunctionReference> { it.reflectionTarget!!.owner.name.asString() == "join" }
         }

@@ -73,7 +73,12 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
      * @param block The lambda containing assertions to apply to the element
      */
     inline fun <reified T : IrElement> T.matches(name: String, block: IrElementMatcher<T>.() -> Unit) {
-        IrElementMatcher(name, this, pluginContext, depth + 1).block()
+        val newDepth = depth + 1
+        try {
+            IrElementMatcher(name, this, pluginContext, newDepth).block()
+        } catch (error: Throwable) {
+            throw AssertionError("$scopeName (${element::class.java.simpleName}/$depth)\n", error)
+        }
     }
 
     /**
@@ -107,7 +112,12 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
      * @throws AssertionError if no matching child is found, with a detailed error message showing the IR tree
      */
     inline fun <reified T : IrElement> containsChild(crossinline predicate: (T) -> Boolean = { true }) {
-        assert(element.hasChild<T>(predicate)) {
+        val result = try {
+            element.hasChild<T>(predicate)
+        } catch (error: Throwable) {
+            throw AssertionError("$scopeName (${element::class.java.simpleName}/$depth)\n", error)
+        }
+        assert(result) {
             "Expected child in element in $scopeName:\n\n${element.renderIrTree()}\n"
         }
     }
@@ -120,7 +130,12 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
      * @throws AssertionError if a matching child is found, with a detailed error message showing the IR tree
      */
     inline fun <reified T : IrElement> containsNoChild(crossinline predicate: (T) -> Boolean = { true }) {
-        assert(!element.hasChild<T>(predicate)) {
+        val result = try {
+            !element.hasChild<T>(predicate)
+        } catch (error: Throwable) {
+            throw AssertionError("$scopeName (${element::class.java.simpleName}/$depth)\n", error)
+        }
+        assert(result) {
             "Expected no child in element in $scopeName:\n\n${element.renderIrTree()}\n"
         }
     }
@@ -142,9 +157,10 @@ inline fun IrElementMatcher<out IrFunction>.returns(typeMatcher: IrTypeMatcher<I
  * @param typeMatcher The lambda containing assertions to apply to the parameter's type
  * @throws NullPointerException if no parameter with the given name is found
  */
-inline fun IrElementMatcher<out IrFunction>.hasValueParameter(
-    name: String, typeMatcher: IrTypeMatcher<IrType>.() -> Unit
-) {
+inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
+    name: String,
+    typeMatcher: IrTypeMatcher<IrType>.() -> Unit
+) { // @formatter:on
     val type = element.parameters.find { it.kind == IrParameterKind.Regular && it.name.asString() == name }!!.type
     IrTypeMatcher(type, element, pluginContext).typeMatcher()
 }
@@ -156,9 +172,10 @@ inline fun IrElementMatcher<out IrFunction>.hasValueParameter(
  * @param typeMatcher The lambda containing assertions to apply to the parameter's type
  * @throws IndexOutOfBoundsException if the index is out of bounds
  */
-inline fun IrElementMatcher<out IrFunction>.hasValueParameter(
-    index: Int, typeMatcher: IrTypeMatcher<IrType>.() -> Unit
-) {
+inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
+    index: Int,
+    typeMatcher: IrTypeMatcher<IrType>.() -> Unit
+) { // @formatter:on
     val type = element.parameters.filter { it.kind == IrParameterKind.Regular }[index].type
     IrTypeMatcher(type, element, pluginContext).typeMatcher()
 }

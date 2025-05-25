@@ -31,9 +31,6 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
  */
 @CompilerTestDsl
 class CompileResultAsserter internal constructor() {
-    /**
-     * Internal list of assertion functions that will be applied to compilation results.
-     */
     @PublishedApi
     internal val assertions: ArrayList<(CompileResult) -> Unit> = ArrayList()
 
@@ -59,14 +56,13 @@ class CompileResultAsserter internal constructor() {
         }
     }
 
-    /**
-     * Asserts that all registered assertions match against the given compilation result.
-     *
-     * @param result The compilation result to check against the registered assertions
-     */
     internal fun assert(result: CompileResult) {
         for (assertion in assertions) {
             assertion(result)
         }
+    }
+
+    internal fun reset() {
+        assertions.clear()
     }
 }

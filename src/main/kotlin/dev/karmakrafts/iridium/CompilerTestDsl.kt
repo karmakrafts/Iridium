@@ -18,9 +18,7 @@ package dev.karmakrafts.iridium
 
 import dev.karmakrafts.iridium.pipeline.CompilerPipelineSpec
 import dev.karmakrafts.iridium.pipeline.compilerPipeline
-import dev.karmakrafts.iridium.pipeline.defaultPipelineSpec
 import org.intellij.lang.annotations.Language
-import kotlin.time.TimeSource
 
 /**
  * Marks classes and functions that are part of the compiler testing DSL.
@@ -42,6 +40,10 @@ internal annotation class CompilerTestDsl
  */
 @CompilerTestDsl
 class CompilerTestScope @PublishedApi internal constructor() {
+    companion object {
+        private const val DEFAULT_FILE_NAME: String = "test.kt"
+    }
+
     /**
      * Provides access to the compiler asserter for specifying expectations about compiler messages.
      */
@@ -52,13 +54,36 @@ class CompilerTestScope @PublishedApi internal constructor() {
      */
     val result: CompileResultAsserter = CompileResultAsserter()
 
-    /**
-     * Internal specification for the compiler pipeline configuration.
-     */
     @PublishedApi
-    internal var pipelineSpec: CompilerPipelineSpec = { defaultPipelineSpec() }
+    internal var pipelineSpec: CompilerPipelineSpec = {}
 
-    private var source: String = ""
+    /**
+     * The Kotlin source code to be compiled and tested.
+     *
+     * This property holds the source code that will be passed to the compiler pipeline
+     * during test evaluation. It can be set using the [source] method.
+     */
+    var source: String = ""
+        private set
+
+    /**
+     * The name of the file to be used during compilation.
+     *
+     * This property specifies the filename that will be passed to the compiler pipeline
+     * when compiling the source code. It defaults to "test.kt" but can be changed
+     * to simulate compilation of files with different names.
+     */
+    var fileName: String = DEFAULT_FILE_NAME
+
+    /**
+     * The Kotlin source code split into individual lines.
+     *
+     * This property provides convenient access to the source code as a list of lines,
+     * which can be useful for line-by-line processing or for assertions that need to
+     * reference specific lines of code.
+     */
+    inline val sourceLines: List<String>
+        get() = source.split('\n')
 
     /**
      * Sets the Kotlin source code to be compiled and tested.
@@ -91,19 +116,10 @@ class CompilerTestScope @PublishedApi internal constructor() {
      * This method creates a compiler pipeline according to the configured specification,
      * compiles the source code, and applies all registered assertions to the compilation result.
      */
-    @PublishedApi
-    internal fun evaluate() {
+    fun evaluate() {
         compilerPipeline(pipelineSpec).use { pipeline ->
             val messageCollector = pipeline.messageCollector
-
-            val startTime = TimeSource.Monotonic.markNow()
-            val result = pipeline.run(source)
-            val time = TimeSource.Monotonic.markNow() - startTime
-
-            val errorCount = messageCollector.messages.count { it.severity.isError }
-            if (errorCount > 0) System.err.println("Finished compilation in ${time.inWholeMilliseconds}ms with $errorCount errors")
-            else println("Finished compilation in ${time.inWholeMilliseconds}ms")
-
+            val result = pipeline.run(source, fileName)
             try {
                 compiler.assert(result)
                 this.result.assert(result)
@@ -113,15 +129,59 @@ class CompilerTestScope @PublishedApi internal constructor() {
             }
         }
     }
+
+    /**
+     * Resets all assertions in this test scope.
+     *
+     * This method clears all assertions that have been registered with both the compiler
+     * and result asserters, allowing the test scope to be reused for a new test without
+     * carrying over previous assertions.
+     */
+    fun resetAssertions() {
+        compiler.reset()
+        result.reset()
+    }
+
+    /**
+     * Completely resets this test scope to its initial state.
+     *
+     * This method resets all configuration in the test scope, including:
+     * - Clearing the pipeline specification
+     * - Resetting the file name to the default value
+     * - Clearing all registered assertions
+     *
+     * After calling this method, the test scope can be reused as if it were newly created.
+     */
+    fun reset() {
+        pipelineSpec = {}
+        fileName = DEFAULT_FILE_NAME
+        resetAssertions()
+    }
 }
 
 /**
- * Runs a compiler test with the given configuration.
+ * Sets up a compiler test without evaluating it.
  *
- * This function is the main entry point for the compiler testing DSL. It creates a test scope,
- * applies the provided configuration, and evaluates the test.
+ * This function creates a new [CompilerTestScope] and applies the provided configuration
+ * to it. It allows setting up a test environment without immediately running the test,
+ * which can be useful when you need to perform additional setup or want to control
+ * when the test is evaluated.
  *
- * @param scope A lambda that configures the test using the DSL
+ * @param scope A lambda with receiver that configures the test scope
+ */
+inline fun setupCompilerTest(scope: CompilerTestScope.() -> Unit) {
+    CompilerTestScope().scope()
+}
+
+/**
+ * Sets up and immediately evaluates a compiler test.
+ *
+ * This function creates a new [CompilerTestScope], applies the provided configuration,
+ * and then evaluates the test by compiling the source code and verifying all assertions.
+ * It's a convenience function that combines test setup and evaluation in a single call.
+ *
+ * @param scope A lambda with receiver that configures the test scope
+ * @see CompilerTestScope.evaluate
  */
 inline fun runCompilerTest(scope: CompilerTestScope.() -> Unit) {
     val scope = CompilerTestScope()
