@@ -28,20 +28,13 @@ java {
     withJavadocJar()
 }
 
-val frameworkConfiguration: Configuration by configurations.creating
-
-configurations {
-    compileOnly { extendsFrom(frameworkConfiguration) }
-    testApi { extendsFrom(frameworkConfiguration) }
-}
-
 dependencies {
-    frameworkConfiguration(libs.junit.api)
-    frameworkConfiguration(libs.kotlin.compiler.embeddable)
-    frameworkConfiguration(libs.kotlin.stdlib)
-    frameworkConfiguration(libs.kotlin.reflect)
-    frameworkConfiguration(libs.kotlin.test)
-    frameworkConfiguration(libs.annotations)
+    api(libs.junit.api)
+    api(libs.kotlin.compiler.embeddable)
+    api(libs.kotlin.stdlib)
+    api(libs.kotlin.reflect)
+    api(libs.kotlin.test)
+    api(libs.annotations)
 }
 
 tasks {
