@@ -77,12 +77,22 @@ build:
 
 # ------------------------------ Publish
 
-publish:
+publish-gitlab:
   stage: publish
   rules:
     - *if-main
     - *if-release
   script:
-    - ./gradlew clean publish closeAndReleaseStagingRepositories
+    - ./gradlew publishAllPublicationsToGitLabRepository
+  tags:
+    - macos
+
+publish-central:
+  stage: publish
+  rules:
+    - *if-main
+    - *if-release
+  script:
+    - ./gradlew publishToSonatype closeAndReleaseStagingRepositories
   tags:
     - macos
