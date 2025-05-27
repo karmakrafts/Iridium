@@ -96,3 +96,12 @@ publish-central:
     - ./gradlew publishToSonatype closeAndReleaseStagingRepositories
   tags:
     - macos
+
+publish-documentation:
+  stage: publish
+  rules:
+    - *if-release
+  script:
+    - ./gradlew -DpublishDocs.root=/var/www/docs/iridium publishDocs
+  tags:
+    - linux
