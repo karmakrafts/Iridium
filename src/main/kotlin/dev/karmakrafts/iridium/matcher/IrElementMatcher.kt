@@ -17,6 +17,7 @@
 package dev.karmakrafts.iridium.matcher
 
 import dev.karmakrafts.iridium.CompilerTestDsl
+import dev.karmakrafts.iridium.util.getChild
 import dev.karmakrafts.iridium.util.hasChild
 import dev.karmakrafts.iridium.util.renderIrTree
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -62,6 +63,29 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
     override val pluginContext: IrPluginContext,
     @PublishedApi internal val depth: Int = 0
 ) : IrTypeAwareMatcher() { // @formatter:on
+    /**
+     * Retrieves a child element of type T that satisfies the given predicate.
+     *
+     * This method searches through the children of the current element to find the first
+     * element of type T that matches the provided predicate. If no matching element is found,
+     * or if an error occurs during the search, an AssertionError is thrown with a detailed
+     * error message.
+     *
+     * @param T The type of child element to retrieve
+     * @param predicate A function that takes an element of type T and returns a boolean indicating if it matches
+     * @return The first child element of type T that satisfies the predicate
+     * @throws AssertionError if no matching child is found or if an error occurs during the search
+     */
+    inline fun <reified T : IrElement> getChild(crossinline predicate: (T) -> Boolean = { true }): T {
+        return try {
+            element.getChild(predicate)
+        } catch (error: Throwable) {
+            throw AssertionError(
+                "Could not get child from element $scopeName (${element::class.java.simpleName}/$depth)\n", error
+            )
+        }
+    }
+
     /**
      * Creates a new matcher for the receiver element with a specified scope name.
      *

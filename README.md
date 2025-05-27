@@ -42,6 +42,9 @@ dependencies {
 ```kotlin
 @Test
 fun `My compiler IR test`() = runCompilerTest {
+    pipeline {
+        defaultPipelineSpec()
+    }
     source("""
         @Suppress("UNCHECKED_CAST")
         fun <T> test(value: T): T = value
