@@ -31,6 +31,7 @@ java {
 dependencies {
     api(libs.junit.api)
     api(libs.kotlin.compiler.embeddable)
+    api(libs.kotlin.native.compiler.embeddable)
     api(libs.kotlin.stdlib)
     api(libs.kotlin.reflect)
     api(libs.kotlin.test)

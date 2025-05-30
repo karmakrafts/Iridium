@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import oshi.PlatformEnum
 import oshi.SystemInfo
 
@@ -53,8 +52,6 @@ enum class CompileTarget(val platform: TargetPlatform) {
     // @formatter:off
     JVM         (JvmPlatforms.defaultJvmPlatform),
     JS          (JsPlatforms.defaultJsPlatform),
-    NATIVE      (NativePlatforms.nativePlatformBySingleTarget(getNativeHostTarget())),
-    WASM_JS     (WasmPlatforms.wasmJs),
-    WASM_WASI   (WasmPlatforms.wasmWasi);
+    NATIVE      (NativePlatforms.nativePlatformBySingleTarget(getNativeHostTarget()));
     // @formatter:on
 }
