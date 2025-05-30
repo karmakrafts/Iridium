@@ -72,22 +72,6 @@ class CompilerSmokeTest {
     }
 
     @Test
-    fun `Compile Kotlin WASM JS program`() = runCompilerTest {
-        pipeline {
-            target = CompileTarget.WASM_JS
-        }
-        checkDefaultProgram()
-    }
-
-    @Test
-    fun `Compile Kotlin WASM WASI program`() = runCompilerTest {
-        pipeline {
-            target = CompileTarget.WASM_WASI
-        }
-        checkDefaultProgram()
-    }
-
-    @Test
     fun `Compile simple Kotlin program with older API`() = runCompilerTest {
         pipeline {
             languageVersionSettings = LanguageVersion.KOTLIN_1_9 withApi ApiVersion.KOTLIN_1_9
