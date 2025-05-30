@@ -54,11 +54,11 @@ fun `My compiler IR test`() = runCompilerTest {
     """.trimIndent()) // *1
     compiler shouldNotReport { error() }
     result irMatches {
-        element.getChild<IrFunction> { it.name.asString() == "main" }.matches("main") {
+        getChild<IrFunction> { it.name.asString() == "main" }.matches("main") {
             returns { unit() }
             hasValueParameter("args") { type(types.stringType.array()) }
         }
-        element.getChild<IrFunction> { it.name.asString() == "test" }.matches("test") {
+        getChild<IrFunction> { it.name.asString() == "test" }.matches("test") {
             hasAnnotation(type("kotlin/Suppress"))
             hasTypeParameter("T")
             returns { typeParameter("T") }
