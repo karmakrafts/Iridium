@@ -21,7 +21,9 @@ import dev.karmakrafts.iridium.util.DelegatingDiagnosticsReporter
 import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
+import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
+import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerIr
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.konan.KonanBuiltIns
@@ -58,9 +60,12 @@ import org.jetbrains.kotlin.fir.pipeline.convertToIrAndActualize
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 
 /**
@@ -201,7 +206,7 @@ class CompilerPipeline internal constructor(
             diagnosticsReporter = diagnosticsCollector
         ) // @formatter:on
         val firResult = FirResult(listOf(ModuleCompilerAnalyzedOutput(moduleSession, scopeSession, files)))
-        val (module, _, pluginContext, _, _, _) = when (compileTarget) {
+        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = when (compileTarget) {
             CompileTarget.JVM -> firResult.convertToIrAndActualizeForJvm(
                 fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration, JvmIrDeserializerImpl()),
                 configuration = compilerConfiguration,
@@ -236,6 +241,29 @@ class CompilerPipeline internal constructor(
                 typeSystemContextProvider = ::IrTypeSystemContextImpl,
                 specialAnnotationsProvider = null,
                 extraActualDeclarationExtractorsInitializer = { emptyList() })
+        }
+        // Right now, linking is only supported on the JVM target
+        if (compileTarget == CompileTarget.JVM) {
+            val descriptorMangler = JvmDescriptorMangler(null)
+            val linker = JvmIrLinker(
+                currentModule = module.descriptor,
+                messageCollector = messageCollector,
+                typeSystem = JvmIrTypeSystemContext(irBuiltIns),
+                symbolTable = symbolTable,
+                stubGenerator = DeclarationStubGeneratorImpl(
+                    moduleDescriptor = module.descriptor,
+                    symbolTable = symbolTable,
+                    irBuiltins = irBuiltIns,
+                    descriptorFinder = DescriptorByIdSignatureFinderImpl(
+                        moduleDescriptor = module.descriptor,
+                        mangler = descriptorMangler
+                    )
+                ),
+                manglerDesc = descriptorMangler,
+                enableIdSignatures = true
+            )
+            linker.init(module)
+            linker.postProcess(true)
         }
         return CompileResult(
             source = source,
