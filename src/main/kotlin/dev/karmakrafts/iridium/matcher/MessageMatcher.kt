@@ -16,7 +16,7 @@
 
 package dev.karmakrafts.iridium.matcher
 
-import dev.karmakrafts.iridium.CompilerTestDsl
+import dev.karmakrafts.iridium.CompilerAssertionDsl
 import dev.karmakrafts.iridium.util.CompilerMessage
 
 /**
@@ -36,7 +36,7 @@ import dev.karmakrafts.iridium.util.CompilerMessage
  * } between 1..3
  * ```
  */
-@CompilerTestDsl
+@CompilerAssertionDsl
 @Suppress("NOTHING_TO_INLINE")
 class MessageMatcher @PublishedApi internal constructor( // @formatter:off
     private val parentMatcher: IncompleteMessageMatcher

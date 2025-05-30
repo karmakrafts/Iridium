@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
  * the structure of FIR (Frontend IR) and IR (Intermediate Representation) elements
  * produced during compilation.
  */
-@CompilerTestDsl
+@CompilerAssertionDsl
 class CompileResultAsserter internal constructor() {
     @PublishedApi
     internal val assertions: ArrayList<(CompileResult) -> Unit> = ArrayList()

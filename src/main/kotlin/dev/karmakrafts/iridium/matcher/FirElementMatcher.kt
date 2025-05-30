@@ -16,7 +16,7 @@
 
 package dev.karmakrafts.iridium.matcher
 
-import dev.karmakrafts.iridium.CompilerTestDsl
+import dev.karmakrafts.iridium.CompilerAssertionDsl
 import dev.karmakrafts.iridium.util.getChild
 import dev.karmakrafts.iridium.util.hasChild
 import dev.karmakrafts.iridium.util.renderFirTree
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.fir.FirElement
  * @param element The FIR element being matched
  * @param depth The current depth in the FIR tree, used for generating scope names
  */
-@CompilerTestDsl
+@CompilerAssertionDsl
 class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor( // @formatter:off
     val scopeName: String,
     val element: ELEMENT,

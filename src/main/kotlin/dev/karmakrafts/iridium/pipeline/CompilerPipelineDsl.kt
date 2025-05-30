@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.ir.backend.js.lower.inline.CopyInlineFunctionBodyLowering
 import java.io.File
 import kotlin.reflect.KFunction
 
@@ -41,8 +40,8 @@ import kotlin.reflect.KFunction
  */
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.CLASS)
-internal annotation class CompilerPipelineDsl
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+annotation class CompilerPipelineDsl
 
 /**
  * Builder class for creating [CompilerPipeline] instances using a DSL-style syntax.
@@ -63,7 +62,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
 
     /**
      * The target platform to compile the code for.
-     * 
+     *
      * This property determines which platform (JVM, JS, Native, WASM) the code will be compiled for.
      * Default is JVM.
      */
@@ -172,6 +171,7 @@ typealias CompilerPipelineSpec = CompilerPipelineBuilder.() -> Unit
  *
  * @param moduleName The name of the module to use in the configuration
  */
+@CompilerPipelineDsl
 @TestOnly
 fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
     config {

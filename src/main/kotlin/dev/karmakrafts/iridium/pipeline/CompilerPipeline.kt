@@ -255,8 +255,7 @@ class CompilerPipeline internal constructor(
                     symbolTable = symbolTable,
                     irBuiltins = irBuiltIns,
                     descriptorFinder = DescriptorByIdSignatureFinderImpl(
-                        moduleDescriptor = module.descriptor,
-                        mangler = descriptorMangler
+                        moduleDescriptor = module.descriptor, mangler = descriptorMangler
                     )
                 ),
                 manglerDesc = descriptorMangler,

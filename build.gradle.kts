@@ -80,7 +80,7 @@ publishing {
         }
     }
     setProjectInfo(rootProject.name, "Testing framework for Kotlin compiler plugins using a custom compiler driver.")
-    setRepository("gitlab.com/karmakrafts/iridium")
+    setRepository("github.com/karmakrafts/iridium")
     apache2License()
     with(GitLabCI) {
         karmaKraftsDefaults()

@@ -29,7 +29,31 @@ import org.intellij.lang.annotations.Language
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-internal annotation class CompilerTestDsl
+annotation class CompilerTestDsl
+
+/**
+ * Marks classes and functions that are part of the compiler assertion DSL.
+ *
+ * This annotation is used to provide type safety and better IDE support for the DSL.
+ * It helps prevent accidental misuse of DSL elements outside their intended context.
+ */
+@DslMarker
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+annotation class CompilerAssertionDsl
+
+@CompilerAssertionDsl
+sealed interface CompilerAssertionScope {
+    /**
+     * Provides access to the compiler asserter for specifying expectations about compiler messages.
+     */
+    val compiler: CompilerAsserter
+
+    /**
+     * Provides access to the result asserter for specifying expectations about compilation results.
+     */
+    val result: CompileResultAsserter
+}
 
 /**
  * The main scope class for compiler tests.
@@ -39,23 +63,22 @@ internal annotation class CompilerTestDsl
  * and assertions about compilation results.
  */
 @CompilerTestDsl
-class CompilerTestScope @PublishedApi internal constructor() {
+class CompilerTestScope @PublishedApi internal constructor() : CompilerAssertionScope {
     companion object {
         private const val DEFAULT_FILE_NAME: String = "test.kt"
     }
 
-    /**
-     * Provides access to the compiler asserter for specifying expectations about compiler messages.
-     */
-    val compiler: CompilerAsserter = CompilerAsserter()
-
-    /**
-     * Provides access to the result asserter for specifying expectations about compilation results.
-     */
-    val result: CompileResultAsserter = CompileResultAsserter()
+    override val compiler: CompilerAsserter = CompilerAsserter()
+    override val result: CompileResultAsserter = CompileResultAsserter()
 
     @PublishedApi
     internal var pipelineSpec: CompilerPipelineSpec = {}
+
+    @PublishedApi
+    internal var defaultAssertions: CompilerAssertionScope.() -> Unit = {}
+
+    @PublishedApi
+    internal var areDefaultAssertionsApplied: Boolean = false
 
     /**
      * The Kotlin source code to be compiled and tested.
@@ -111,12 +134,37 @@ class CompilerTestScope @PublishedApi internal constructor() {
     }
 
     /**
+     * Sets default test specifications that will be applied when the test is evaluated.
+     *
+     * This method allows defining a set of default configurations and assertions that
+     * should be applied to all tests using this scope, persisting between scope resets.
+     * These defaults are applied automatically before test evaluation if they haven't been applied already.
+     *
+     * Multiple calls to this method will accumulate the defaults, with each new
+     * specification being applied after the previous ones.
+     *
+     * @param block A lambda with receiver that defines default test specifications
+     * @see evaluate
+     */
+    inline fun default(crossinline block: CompilerAssertionScope.() -> Unit) {
+        val previousSpec = defaultAssertions
+        defaultAssertions = {
+            previousSpec()
+            block()
+        }
+    }
+
+    /**
      * Evaluates the test by compiling the source code and verifying all assertions.
      *
      * This method creates a compiler pipeline according to the configured specification,
      * compiles the source code, and applies all registered assertions to the compilation result.
      */
     fun evaluate() {
+        if (!areDefaultAssertionsApplied) {
+            defaultAssertions()
+            areDefaultAssertionsApplied = true
+        }
         compilerPipeline(pipelineSpec).use { pipeline ->
             val messageCollector = pipeline.messageCollector
             val result = pipeline.run(source, fileName)
@@ -140,6 +188,7 @@ class CompilerTestScope @PublishedApi internal constructor() {
     fun resetAssertions() {
         compiler.reset()
         result.reset()
+        areDefaultAssertionsApplied = false
     }
 
     /**
@@ -155,7 +204,7 @@ class CompilerTestScope @PublishedApi internal constructor() {
     fun reset() {
         pipelineSpec = {}
         fileName = DEFAULT_FILE_NAME
-        resetAssertions()
+        resetAssertions() // Also resets areDefaultAssertionsApplied
     }
 }
 

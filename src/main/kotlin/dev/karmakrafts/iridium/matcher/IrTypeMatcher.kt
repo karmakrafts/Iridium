@@ -16,7 +16,7 @@
 
 package dev.karmakrafts.iridium.matcher
 
-import dev.karmakrafts.iridium.CompilerTestDsl
+import dev.karmakrafts.iridium.CompilerAssertionDsl
 import dev.karmakrafts.iridium.util.renderIrTree
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.builtins.UnsignedType
@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.ir.util.render
  */
 
 @OptIn(UnsafeDuringIrConstructionAPI::class)
-@CompilerTestDsl
+@CompilerAssertionDsl
 class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @formatter:off
     private val type: TYPE,
     private val parentElement: IrElement,

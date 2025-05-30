@@ -7,7 +7,6 @@ import dev.karmakrafts.iridium.matcher.returns
 import dev.karmakrafts.iridium.pipeline.CompileTarget
 import dev.karmakrafts.iridium.pipeline.defaultPipelineSpec
 import dev.karmakrafts.iridium.pipeline.withApi
-import dev.karmakrafts.iridium.util.getChild
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -30,11 +29,13 @@ class CompilerSmokeTest {
     """.trimIndent()
 
     private fun CompilerTestScope.checkDefaultProgram() {
+        default {
+            compiler shouldNotReport { error() }
+        }
         pipeline {
             defaultPipelineSpec()
         }
         source(defaultProgram)
-        compiler shouldNotReport { error() }
         result irMatches {
             getChild<IrFunction> { it.name.asString() == "main" }.matches("main") {
                 returns { unit() }

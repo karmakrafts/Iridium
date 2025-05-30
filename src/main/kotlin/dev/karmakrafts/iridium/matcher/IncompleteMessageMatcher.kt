@@ -16,7 +16,7 @@
 
 package dev.karmakrafts.iridium.matcher
 
-import dev.karmakrafts.iridium.CompilerTestDsl
+import dev.karmakrafts.iridium.CompilerAssertionDsl
 import dev.karmakrafts.iridium.util.CompilerMessage
 import dev.karmakrafts.iridium.util.CompilerMessageFilter
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
  * The matcher accumulates conditions that are used to filter compiler messages, and provides
  * a human-readable description of these conditions for use in assertion messages.
  */
-@CompilerTestDsl
+@CompilerAssertionDsl
 class IncompleteMessageMatcher @PublishedApi internal constructor() {
     internal var condition: CompilerMessageFilter = CompilerMessageFilter { true }
     internal val conditions: ArrayList<String> = ArrayList()
