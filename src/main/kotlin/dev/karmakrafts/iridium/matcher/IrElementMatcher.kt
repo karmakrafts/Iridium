@@ -63,6 +63,10 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
     override val pluginContext: IrPluginContext,
     @PublishedApi internal val depth: Int = 0
 ) : IrTypeAwareMatcher() { // @formatter:on
+    override val assertionContext: String by lazy {
+        "Assertion failed in $scopeName (${element::class.java.simpleName}/$depth)\n${element.renderIrTree()}"
+    }
+
     /**
      * Retrieves a child element of type T that satisfies the given predicate.
      *
@@ -125,7 +129,13 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
      * @param block The lambda containing assertions to apply to the type
      */
     inline infix fun <reified T : IrType> T.matches(block: IrTypeMatcher<T>.() -> Unit) {
-        IrTypeMatcher(this, element, pluginContext).block()
+        IrTypeMatcher( // @formatter:off
+            scopeName = scopeName,
+            depth = depth,
+            type = this,
+            parentElement = element,
+            pluginContext = pluginContext
+        ).block() // @formatter:on
     }
 
     /**
@@ -172,7 +182,13 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
  */
 @CompilerAssertionDsl
 inline fun IrElementMatcher<out IrFunction>.returns(typeMatcher: IrTypeMatcher<IrType>.() -> Unit) {
-    IrTypeMatcher(element.returnType, element, pluginContext).typeMatcher()
+    IrTypeMatcher( // @formatter:off
+        scopeName = scopeName,
+        depth = depth,
+        type = element.returnType,
+        parentElement = element,
+        pluginContext = pluginContext
+    ).typeMatcher() // @formatter:on
 }
 
 /**
@@ -188,7 +204,13 @@ inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
     typeMatcher: IrTypeMatcher<IrType>.() -> Unit
 ) { // @formatter:on
     val type = element.parameters.find { it.kind == IrParameterKind.Regular && it.name.asString() == name }!!.type
-    IrTypeMatcher(type, element, pluginContext).typeMatcher()
+    IrTypeMatcher( // @formatter:off
+        scopeName = scopeName,
+        depth = depth,
+        type = type,
+        parentElement = element,
+        pluginContext = pluginContext
+    ).typeMatcher() // @formatter:on
 }
 
 /**
@@ -204,7 +226,13 @@ inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
     typeMatcher: IrTypeMatcher<IrType>.() -> Unit
 ) { // @formatter:on
     val type = element.parameters.filter { it.kind == IrParameterKind.Regular }[index].type
-    IrTypeMatcher(type, element, pluginContext).typeMatcher()
+    IrTypeMatcher( // @formatter:off
+        scopeName = scopeName,
+        depth = depth,
+        type = type,
+        parentElement = element,
+        pluginContext = pluginContext
+    ).typeMatcher() // @formatter:on
 }
 
 /**

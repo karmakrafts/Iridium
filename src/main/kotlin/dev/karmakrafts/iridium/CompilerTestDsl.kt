@@ -16,6 +16,7 @@
 
 package dev.karmakrafts.iridium
 
+import dev.karmakrafts.iridium.matcher.BasicAssertionScope
 import dev.karmakrafts.iridium.pipeline.CompilerPipelineSpec
 import dev.karmakrafts.iridium.pipeline.compilerPipeline
 import org.intellij.lang.annotations.Language
@@ -63,7 +64,7 @@ sealed interface CompilerAssertionScope {
  * and assertions about compilation results.
  */
 @CompilerTestDsl
-class CompilerTestScope @PublishedApi internal constructor() : CompilerAssertionScope {
+class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionScope(), CompilerAssertionScope {
     companion object {
         private const val DEFAULT_FILE_NAME: String = "test.kt"
     }
@@ -79,6 +80,8 @@ class CompilerTestScope @PublishedApi internal constructor() : CompilerAssertion
 
     @PublishedApi
     internal var areDefaultAssertionsApplied: Boolean = false
+
+    override val assertionContext: String = "CompilerTestScope"
 
     /**
      * The Kotlin source code to be compiled and tested.

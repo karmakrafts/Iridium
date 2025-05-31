@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.name.ClassId
  * - Converting types to array types
  * - Making types nullable or non-null
  */
-abstract class IrTypeAwareMatcher : IrPluginAwareMatcher {
+abstract class IrTypeAwareMatcher : BasicAssertionScope(), IrPluginAwareMatcher {
     /**
      * Creates an IR type from a fully qualified class name.
      *

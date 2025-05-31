@@ -18,7 +18,6 @@ package dev.karmakrafts.iridium.util
 
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.util.DumpIrTreeVisitor
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -36,7 +35,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
 @TestOnly
 fun IrElement.renderIrTree(maxLines: Int = 5): String {
     val builder = StringBuilder()
-    accept(DumpIrTreeVisitor(builder), "")
+    accept(ColoredDumpIrTreeVisitor(builder), "")
     val lines = builder.toString().split("\n").take(maxLines)
     val joinedLines = lines.joinToString("\n")
     return if (lines.size == maxLines) "$joinedLines\n[...]"

@@ -28,6 +28,12 @@ java {
     withJavadocJar()
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
+}
+
 dependencies {
     api(libs.junit.api)
     api(libs.kotlin.compiler.embeddable)
@@ -37,6 +43,7 @@ dependencies {
     api(libs.kotlin.test)
     api(libs.annotations)
     implementation(libs.oshi.core)
+    implementation(libs.jansi)
 }
 
 tasks {

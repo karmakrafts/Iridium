@@ -36,7 +36,11 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
     val scopeName: String,
     val element: ELEMENT,
     @PublishedApi internal val depth: Int = 0
-) { // @formatter:on
+) : BasicAssertionScope() { // @formatter:on
+    override val assertionContext: String by lazy {
+        "Assertion failed in $scopeName (${element::class.java.simpleName}/$depth)\n${element.renderFirTree()}"
+    }
+
     /**
      * Retrieves a child element of type T that satisfies the given predicate.
      *
