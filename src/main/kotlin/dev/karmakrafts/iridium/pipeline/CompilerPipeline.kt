@@ -16,7 +16,6 @@
 
 package dev.karmakrafts.iridium.pipeline
 
-import dev.karmakrafts.iridium.util.CompilerMessageCallback
 import dev.karmakrafts.iridium.util.DelegatingDiagnosticsReporter
 import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.intellij.lang.annotations.Language
@@ -103,13 +102,13 @@ class CompilerPipeline internal constructor(
      */
     val irExtensions: List<IrGenerationExtension> = emptyList(),
 
-    private val compilerConfiguration: CompilerConfiguration,
-    messageCallback: CompilerMessageCallback = CompilerMessageCallback {}
+    @PublishedApi internal val compilerConfiguration: CompilerConfiguration
 ) : AutoCloseable {
     private val disposable: Disposable = Disposer.newDisposable()
-    val messageCollector: RecordingMessageCollector = RecordingMessageCollector(messageCallback).apply {
-        compilerConfiguration.messageCollector = this
-    }
+
+    inline val messageCollector: RecordingMessageCollector
+        get() = compilerConfiguration.messageCollector as RecordingMessageCollector
+
     val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
 
     private val environment: KotlinCoreEnvironment = createEnvironment()

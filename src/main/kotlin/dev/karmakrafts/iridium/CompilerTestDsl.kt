@@ -102,6 +102,12 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
     var fileName: String = DEFAULT_FILE_NAME
 
     /**
+     * If true, the test will print all of its recorded compiler messages
+     * to the standard out stream after compilation.
+     */
+    var printCompilerMessages: Boolean = false
+
+    /**
      * The Kotlin source code split into individual lines.
      *
      * This property provides convenient access to the source code as a list of lines,
@@ -174,6 +180,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
             try {
                 compiler.assert(result)
                 this.result.assert(result)
+                if (printCompilerMessages) messageCollector.printAll()
             } catch (error: Throwable) {
                 messageCollector.printErrors()
                 throw error

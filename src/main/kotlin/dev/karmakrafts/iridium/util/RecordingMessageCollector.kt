@@ -79,7 +79,7 @@ class RecordingMessageCollector internal constructor(
     }
 
     /**
-     * Prints all error messages to standard error.
+     * Prints all recorded error messages to standard error.
      * This method is intended for testing purposes only.
      */
     @TestOnly
@@ -97,5 +97,24 @@ class RecordingMessageCollector internal constructor(
             System.err.println("[${error.severity.name.first()}] ${error.message} ($formattedLocation)")
         }
         System.err.println("=========================================")
+    }
+
+    /**
+     * Prints all recorded messages to standard out.
+     * This method is intended for testing purposes only.
+     */
+    @TestOnly
+    fun printAll() {
+        println("========== RAW COMPILER OUTPUT ==========")
+        for (message in messages) {
+            val location = message.location
+            if (location == null) {
+                System.err.println("[${message.severity.name.first()}] ${message.message}")
+                continue
+            }
+            val formattedLocation = "${location.path}:${location.line}:${location.column}"
+            System.err.println("[${message.severity.name.first()}] ${message.message} ($formattedLocation)")
+        }
+        println("=========================================")
     }
 }

@@ -17,17 +17,18 @@
 package dev.karmakrafts.iridium.pipeline
 
 import dev.karmakrafts.iridium.util.CompilerMessageCallback
-import dev.karmakrafts.iridium.util.DefaultFirExtensionRegistrar
 import dev.karmakrafts.iridium.util.DelegatingIrGenerationExtension
 import dev.karmakrafts.iridium.util.IrGenerationCallback
+import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
+import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import java.io.File
 import kotlin.reflect.KFunction
@@ -52,7 +53,7 @@ annotation class CompilerPipelineDsl
 @CompilerPipelineDsl
 class CompilerPipelineBuilder @PublishedApi internal constructor() {
     private val irExtensions: ArrayList<IrGenerationExtension> = ArrayList()
-    private val firExtensionRegistrars: ArrayList<FirExtensionRegistrar> = ArrayList()
+    private val firExtensionRegistrars: ArrayList<(MessageCollector) -> FirExtensionRegistrar> = ArrayList()
 
     @PublishedApi
     internal var messageCallback: CompilerMessageCallback = CompilerMessageCallback {}
@@ -97,20 +98,9 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      * @param registrar The FIR extension registrar to register
      * @throws IllegalStateException if the registrar is already registered
      */
-    fun firExtensionRegistrar(registrar: FirExtensionRegistrar) {
+    fun firExtensionRegistrar(registrar: (MessageCollector) -> FirExtensionRegistrar) {
         check(registrar !in firExtensionRegistrars) { "FIR extension registrar is already added" }
         firExtensionRegistrars += registrar
-    }
-
-    /**
-     * Registers a FIR declaration generation extension.
-     *
-     * This method wraps the extension in a [DefaultFirExtensionRegistrar] and registers it.
-     *
-     * @param extension The FIR declaration generation extension to register
-     */
-    fun firExtension(extension: FirDeclarationGenerationExtension) {
-        firExtensionRegistrar(DefaultFirExtensionRegistrar(extension))
     }
 
     /**
@@ -141,14 +131,17 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      * @return A new [CompilerPipeline] instance
      */
     @PublishedApi
-    internal fun build(): CompilerPipeline = CompilerPipeline(
-        compileTarget = target,
-        languageVersionSettings = languageVersionSettings,
-        firExtensions = firExtensionRegistrars,
-        irExtensions = irExtensions,
-        compilerConfiguration = compilerConfig,
-        messageCallback = messageCallback
-    )
+    internal fun build(): CompilerPipeline {
+        val messageCollector = RecordingMessageCollector(messageCallback)
+        compilerConfig.messageCollector = messageCollector
+        return CompilerPipeline(
+            compileTarget = target,
+            languageVersionSettings = languageVersionSettings,
+            firExtensions = firExtensionRegistrars.map { it(messageCollector) },
+            irExtensions = irExtensions,
+            compilerConfiguration = compilerConfig
+        )
+    }
 }
 
 /**
