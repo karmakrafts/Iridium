@@ -16,6 +16,9 @@
 
 package dev.karmakrafts.iridium.pipeline
 
+import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.jvmTarget
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -48,10 +51,15 @@ private fun getNativeHostTarget(): KonanTarget {
     }
 }
 
-enum class CompileTarget(val platform: TargetPlatform) {
+/**
+ * Represents a target platform for Kotlin test compilations.
+ */
+enum class CompileTarget(private val platformProvider: (CompilerConfiguration) -> TargetPlatform) {
     // @formatter:off
-    JVM         (JvmPlatforms.defaultJvmPlatform),
-    JS          (JsPlatforms.defaultJsPlatform),
-    NATIVE      (NativePlatforms.nativePlatformBySingleTarget(getNativeHostTarget()));
+    JVM     ({ JvmPlatforms.jvmPlatformByTargetVersion(it.jvmTarget ?: JvmTarget.DEFAULT) }),
+    JS      ({ JsPlatforms.defaultJsPlatform }),
+    NATIVE  ({ NativePlatforms.nativePlatformBySingleTarget(getNativeHostTarget()) });
     // @formatter:on
+
+    internal operator fun invoke(config: CompilerConfiguration): TargetPlatform = platformProvider(config)
 }

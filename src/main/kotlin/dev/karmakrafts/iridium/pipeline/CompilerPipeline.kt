@@ -178,7 +178,7 @@ class CompilerPipeline internal constructor(
         dependencies = dependencies,
         dependsOnDependencies = emptyList(),
         friendDependencies = emptyList(),
-        platform = compileTarget.platform
+        platform = compileTarget(compilerConfiguration)
     )
 
     /**

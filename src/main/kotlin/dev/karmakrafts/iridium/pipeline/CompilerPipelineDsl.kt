@@ -173,8 +173,8 @@ fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
         put(CommonConfigurationKeys.INCREMENTAL_COMPILATION, false)
         put(JVMConfigurationKeys.COMPILE_JAVA, true)
         put(JVMConfigurationKeys.JDK_HOME, File(System.getProperty("java.home")))
-        addJvmClasspathRootByType<Function<*>>()
-        addJvmClasspathRootByType<KFunction<*>>()
+        addJvmClasspathRootByType<Function<*>>()    // Pull kotlin-stdlib into classpath
+        addJvmClasspathRootByType<KFunction<*>>()   // Pull kotlin-reflect into classpath
     }
 }
 
