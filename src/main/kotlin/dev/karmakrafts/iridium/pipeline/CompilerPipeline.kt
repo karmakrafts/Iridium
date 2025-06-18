@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.config.jvmTarget
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.config.moduleName
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
@@ -138,7 +139,7 @@ class CompilerPipeline internal constructor(
         moduleData = moduleData,
         javaSourcesScope = fileSearchScope,
         createIncrementalCompilationSymbolProviders = { null },
-        jvmTarget = JvmTarget.DEFAULT,
+        jvmTarget = compilerConfiguration.jvmTarget ?: JvmTarget.DEFAULT,
         lookupTracker = null,
         enumWhenTracker = null,
         importTracker = null,
