@@ -1,10 +1,10 @@
 [versions]
 java = "17"
 
-iridium = "1.5.1"
+iridium = "1.5.2"
 kotlin = "2.1.21" # https://github.com/JetBrains/kotlin/releases
 dokka = "2.0.0" # https://github.com/Kotlin/dokka/releases
-karmaConventions = "1.4.0" # https://github.com/karmakrafts/karma-conventions/tags
+karmaConventions = "1.4.1" # https://github.com/karmakrafts/karma-conventions/tags
 gradleNexus = "2.0.0" # https://github.com/gradle-nexus/publish-plugin/releases
 junit = "5.13.1" # https://github.com/junit-team/junit5/releases
 annotations = "26.0.2" # https://github.com/JetBrains/java-annotations/releases
