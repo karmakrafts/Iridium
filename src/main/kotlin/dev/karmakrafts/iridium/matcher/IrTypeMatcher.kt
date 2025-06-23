@@ -17,9 +17,7 @@
 package dev.karmakrafts.iridium.matcher
 
 import dev.karmakrafts.iridium.CompilerAssertionDsl
-import dev.karmakrafts.iridium.util.ColoredRenderIrElementVisitor
 import dev.karmakrafts.iridium.util.renderIrTree
-import dev.karmakrafts.iridium.util.renderTypeWithRenderer
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.ir.IrElement
@@ -28,7 +26,6 @@ import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.defaultType
-import org.jetbrains.kotlin.ir.util.DumpIrTreeOptions
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.render
@@ -60,11 +57,8 @@ class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @forma
     override val pluginContext: IrPluginContext
 ) : IrTypeAwareMatcher() { // @formatter:on
     override val assertionContext: String by lazy {
-        val options = DumpIrTreeOptions()
         "Assertion failed in $scopeName (${type::class.java.simpleName}/$depth)\n${
-            type.renderTypeWithRenderer(
-                ColoredRenderIrElementVisitor(options), options
-            )
+            type.render()
         }"
     }
 

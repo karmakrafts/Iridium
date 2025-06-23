@@ -50,6 +50,7 @@ internal class DelegatingDiagnosticsReporter(
             Severity.INFO -> CompilerMessageSeverity.INFO
             Severity.WARNING -> CompilerMessageSeverity.WARNING
             Severity.ERROR -> CompilerMessageSeverity.ERROR
+            Severity.FIXED_WARNING -> CompilerMessageSeverity.FIXED_WARNING
         }
         val message = RootDiagnosticRendererFactory(diagnostic).render(diagnostic)
         val location = diagnostic.textRanges.firstOrNull()?.let { range ->

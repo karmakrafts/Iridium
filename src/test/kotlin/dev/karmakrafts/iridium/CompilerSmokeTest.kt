@@ -4,7 +4,6 @@ import dev.karmakrafts.iridium.matcher.hasAnnotation
 import dev.karmakrafts.iridium.matcher.hasTypeParameter
 import dev.karmakrafts.iridium.matcher.hasValueParameter
 import dev.karmakrafts.iridium.matcher.returns
-import dev.karmakrafts.iridium.pipeline.CompileTarget
 import dev.karmakrafts.iridium.pipeline.defaultPipelineSpec
 import dev.karmakrafts.iridium.pipeline.withApi
 import org.intellij.lang.annotations.Language
@@ -56,21 +55,21 @@ class CompilerSmokeTest {
         checkDefaultProgram()
     }
 
-    @Test
-    fun `Compile Kotlin JS program`() = runCompilerTest {
-        pipeline {
-            target = CompileTarget.JS
-        }
-        checkDefaultProgram()
-    }
+    //@Test
+    //fun `Compile Kotlin JS program`() = runCompilerTest {
+    //    pipeline {
+    //        target = CompileTarget.JS
+    //    }
+    //    checkDefaultProgram()
+    //} TODO: reimplement this
 
-    @Test
-    fun `Compile Kotlin Native program`() = runCompilerTest {
-        pipeline {
-            target = CompileTarget.NATIVE
-        }
-        checkDefaultProgram()
-    }
+    //@Test
+    //fun `Compile Kotlin Native program`() = runCompilerTest {
+    //    pipeline {
+    //        target = CompileTarget.NATIVE
+    //    }
+    //    checkDefaultProgram()
+    //} TODO: reimplement this
 
     @Test
     fun `Compile simple Kotlin program with older API`() = runCompilerTest {
