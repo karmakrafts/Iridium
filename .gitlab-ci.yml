@@ -104,4 +104,4 @@ publish-documentation:
   script:
     - ./gradlew -DpublishDocs.root=/var/www/docs/iridium publishDocs
   tags:
-    - linux
+    - docs
