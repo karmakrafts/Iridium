@@ -37,7 +37,6 @@ dependencies {
     api(libs.kotlin.test)
     api(libs.annotations)
     implementation(libs.oshi.core)
-    implementation(libs.jansi)
 }
 
 tasks {
