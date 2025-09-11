@@ -20,11 +20,11 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.diagnostics.DiagnosticContext
+import org.jetbrains.kotlin.diagnostics.DiagnosticMarker
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
-import org.jetbrains.kotlin.diagnostics.rendering.RootDiagnosticRendererFactory
 
 internal class DelegatingDiagnosticsReporter(
     val messageCollector: MessageCollector
@@ -52,7 +52,10 @@ internal class DelegatingDiagnosticsReporter(
             Severity.ERROR -> CompilerMessageSeverity.ERROR
             Severity.FIXED_WARNING -> CompilerMessageSeverity.FIXED_WARNING
         }
-        val message = RootDiagnosticRendererFactory(diagnostic).render(diagnostic)
+        if (diagnostic !is DiagnosticMarker) {
+            messageCollector.report(severity, diagnostic.renderMessage())
+            return
+        }
         val location = diagnostic.textRanges.firstOrNull()?.let { range ->
             val lineAndColumn = DiagnosticUtils.getLineAndColumnInPsiFile(diagnostic.psiElement.containingFile, range)
             CompilerMessageLocation.create(
@@ -62,6 +65,6 @@ internal class DelegatingDiagnosticsReporter(
                 lineContent = lineAndColumn.lineContent
             )
         }
-        messageCollector.report(severity, message, location)
+        messageCollector.report(severity, diagnostic.renderMessage(), location)
     }
 }

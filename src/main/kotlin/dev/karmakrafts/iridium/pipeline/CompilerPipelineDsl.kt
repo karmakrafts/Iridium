@@ -22,7 +22,6 @@ import dev.karmakrafts.iridium.util.IrGenerationCallback
 import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
-import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -31,7 +30,6 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import java.io.File
 import kotlin.reflect.KFunction
 
@@ -62,14 +60,6 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
 
     @PublishedApi
     internal val compilerConfig: CompilerConfiguration = CompilerConfiguration()
-
-    /**
-     * The target platform to compile the code for.
-     *
-     * This property determines which platform (JVM, JS, Native, WASM) the code will be compiled for.
-     * Default is JVM.
-     */
-    var target: CompileTarget = CompileTarget.JVM
 
     /**
      * The language version settings to use for compilation.
@@ -137,7 +127,6 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
         val messageCollector = RecordingMessageCollector(messageCallback)
         compilerConfig.messageCollector = messageCollector
         return CompilerPipeline(
-            compileTarget = target,
             languageVersionSettings = languageVersionSettings,
             firExtensions = firExtensionRegistrars.map { it(messageCollector) },
             irExtensions = irExtensions,

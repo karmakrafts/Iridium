@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.fir.backend.jvm.JvmFir2IrExtensions
 import org.jetbrains.kotlin.fir.caches.FirThreadUnsafeCachesFactory
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.pipeline.FirResult
 import org.jetbrains.kotlin.fir.pipeline.ModuleCompilerAnalyzedOutput
 import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
@@ -56,6 +55,7 @@ import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
 
@@ -74,10 +74,6 @@ import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
  * and compiler configuration.
  */
 class CompilerPipeline internal constructor(
-    /**
-     * The target platform to compile the test code for.
-     */
-    val compileTarget: CompileTarget,
 
     /**
      * The language version settings to use for compilation.
@@ -103,12 +99,6 @@ class CompilerPipeline internal constructor(
 
     val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
 
-    private val environmentConfigFiles: EnvironmentConfigFiles = when (compileTarget) {
-        CompileTarget.JVM -> EnvironmentConfigFiles.JVM_CONFIG_FILES
-        //CompileTarget.JS -> EnvironmentConfigFiles.JS_CONFIG_FILES TODO: reimplement this
-        //CompileTarget.NATIVE -> EnvironmentConfigFiles.NATIVE_CONFIG_FILES TODO: reimplement this
-    }
-
     private val environment: KotlinCoreEnvironment = createEnvironment()
     private inline val project: Project get() = environment.project
     private val projectEnvironment: AbstractProjectEnvironment = createProjectEnvironment()
@@ -117,7 +107,8 @@ class CompilerPipeline internal constructor(
     private val fileSearchScope: PsiBasedProjectFileSearchScope = PsiBasedProjectFileSearchScope(globalSearchScope)
 
     private val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
-    private val sessionProvider: FirProjectSessionProvider = FirProjectSessionProvider()
+
+    //private val sessionProvider: FirProjectSessionProvider = FirProjectSessionProvider()
     private val packagePartProvider: JvmPackagePartProvider by lazy {
         environment.createPackagePartProvider(
             globalSearchScope
@@ -129,112 +120,59 @@ class CompilerPipeline internal constructor(
         )
     }
 
-    private val sharedLibSession: FirSession = when (compileTarget) {
-        CompileTarget.JVM -> FirJvmSessionFactory.createSharedLibrarySession(
-            mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
-            sessionProvider = sessionProvider,
-            projectEnvironment = projectEnvironment,
-            extensionRegistrars = firExtensions,
-            scope = fileSearchScope,
-            packagePartProvider = packagePartProvider,
-            languageVersionSettings = languageVersionSettings,
-            predefinedJavaComponents = predefJavaComponents
-        )
-
-        //CompileTarget.JS -> FirJsSessionFactory.createSharedLibrarySession(
-        //    mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
-        //    sessionProvider = sessionProvider,
-        //    configuration = compilerConfiguration,
-        //    extensionRegistrars = firExtensions
-        //) TODO: reimplement this
-
-        //CompileTarget.NATIVE -> FirNativeSessionFactory.createSharedLibrarySession(
-        //    mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
-        //    sessionProvider = sessionProvider,
-        //    configuration = compilerConfiguration,
-        //    extensionRegistrars = firExtensions
-        //) TODO: reimplement this
-    }
+    private val sharedLibSession: FirSession = FirJvmSessionFactory.createSharedLibrarySession(
+        mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
+        //sessionProvider = sessionProvider,
+        projectEnvironment = projectEnvironment,
+        extensionRegistrars = firExtensions,
+        packagePartProvider = packagePartProvider,
+        languageVersionSettings = languageVersionSettings,
+        predefinedJavaComponents = predefJavaComponents
+    )
 
     private val libModuleData: FirModuleData = createModuleData("${compilerConfiguration.moduleName!!}-lib")
 
     @Suppress("UNUSED") // This needs to be created and held for the lifetime of the pipeline
-    private val libSession: FirSession = when (compileTarget) {
-        CompileTarget.JVM -> FirJvmSessionFactory.createLibrarySession(
-            sessionProvider = sessionProvider,
-            sharedLibrarySession = sharedLibSession,
-            moduleDataProvider = SingleModuleDataProvider(libModuleData),
-            projectEnvironment = projectEnvironment,
-            extensionRegistrars = firExtensions,
-            scope = fileSearchScope,
-            packagePartProvider = packagePartProvider,
-            languageVersionSettings = languageVersionSettings,
-            predefinedJavaComponents = predefJavaComponents
-        )
-
-        //CompileTarget.JS -> FirJsSessionFactory.createLibrarySession(
-        //    resolvedLibraries = emptyList(),
-        //    sessionProvider = sessionProvider,
-        //    sharedLibrarySession = sharedLibSession,
-        //    moduleDataProvider = SingleModuleDataProvider(libModuleData),
-        //    extensionRegistrars = firExtensions,
-        //    compilerConfiguration = compilerConfiguration,
-        //) TODO: reimplement this
-
-        //CompileTarget.NATIVE -> FirNativeSessionFactory.createLibrarySession(
-        //    resolvedLibraries = emptyList(),
-        //    sessionProvider = sessionProvider,
-        //    sharedLibrarySession = sharedLibSession,
-        //    moduleDataProvider = SingleModuleDataProvider(libModuleData),
-        //    extensionRegistrars = firExtensions,
-        //    compilerConfiguration = compilerConfiguration
-        //) TODO: reimplement this
-    }
+    private val libSession: FirSession = FirJvmSessionFactory.createLibrarySession(
+        // sessionProvider = sessionProvider,
+        sharedLibrarySession = sharedLibSession,
+        moduleDataProvider = SingleModuleDataProvider(libModuleData),
+        projectEnvironment = projectEnvironment,
+        extensionRegistrars = firExtensions,
+        scope = fileSearchScope,
+        packagePartProvider = packagePartProvider,
+        languageVersionSettings = languageVersionSettings,
+        predefinedJavaComponents = predefJavaComponents
+    )
 
     private val sourceModuleData: FirModuleData =
         createModuleData(compilerConfiguration.moduleName!!, listOf(libModuleData))
 
-    private val sourceSession: FirSession = when (compileTarget) {
-        CompileTarget.JVM -> FirJvmSessionFactory.createSourceSession(
-            moduleData = sourceModuleData,
-            sessionProvider = sessionProvider,
-            javaSourcesScope = fileSearchScope,
-            projectEnvironment = projectEnvironment,
-            createIncrementalCompilationSymbolProviders = { null },
-            extensionRegistrars = firExtensions,
-            configuration = compilerConfiguration,
-            predefinedJavaComponents = null,
-            needRegisterJavaElementFinder = false,
-            init = {})
-
-        //CompileTarget.JS -> FirJsSessionFactory.createSourceSession(
-        //    moduleData = sourceModuleData,
-        //    sessionProvider = sessionProvider,
-        //    extensionRegistrars = firExtensions,
-        //    configuration = compilerConfiguration,
-        //    icData = null,
-        //    init = {}) TODO: reimplement this
-
-        //CompileTarget.NATIVE -> FirNativeSessionFactory.createSourceSession(
-        //    moduleData = sourceModuleData,
-        //    sessionProvider = sessionProvider,
-        //    extensionRegistrars = firExtensions,
-        //    configuration = compilerConfiguration,
-        //    icData = null,
-        //    init = {}) TODO: reimplement this
-    }
+    private val sourceSession: FirSession = FirJvmSessionFactory.createSourceSession(
+        moduleData = sourceModuleData,
+        //sessionProvider = sessionProvider,
+        javaSourcesScope = fileSearchScope,
+        projectEnvironment = projectEnvironment,
+        createIncrementalCompilationSymbolProviders = { null },
+        extensionRegistrars = firExtensions,
+        configuration = compilerConfiguration,
+        predefinedJavaComponents = null,
+        needRegisterJavaElementFinder = false,
+        init = {},
+        isForLeafHmppModule = false
+    )
 
     private fun createProjectEnvironment(): AbstractProjectEnvironment = createProjectEnvironment(
         configuration = compilerConfiguration,
         parentDisposable = disposable,
-        configFiles = environmentConfigFiles,
+        configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES,
         messageCollector = messageCollector,
     )
 
     private fun createEnvironment(): KotlinCoreEnvironment = KotlinCoreEnvironment.createForProduction( // @formatter:off
         configuration = compilerConfiguration,
         projectDisposable = disposable,
-        configFiles = environmentConfigFiles
+        configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES
     ) // @formatter:on
 
     private fun createModuleData( // @formatter:off
@@ -245,7 +183,7 @@ class CompilerPipeline internal constructor(
         dependencies = dependencies,
         dependsOnDependencies = emptyList(),
         friendDependencies = emptyList(),
-        platform = compileTarget(compilerConfiguration)
+        platform = JvmPlatforms.defaultJvmPlatform
     )
 
     /**
@@ -273,64 +211,32 @@ class CompilerPipeline internal constructor(
             diagnosticsReporter = diagnosticsCollector
         ) // @formatter:on
         val firResult = FirResult(listOf(ModuleCompilerAnalyzedOutput(sourceSession, scopeSession, files)))
-        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = when (compileTarget) {
-            CompileTarget.JVM -> firResult.convertToIrAndActualizeForJvm(
-                fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration, JvmIrDeserializerImpl()),
-                configuration = compilerConfiguration,
-                diagnosticsReporter = diagnosticsCollector,
-                irGeneratorExtensions = irExtensions
-            )
-
-            //CompileTarget.NATIVE -> firResult.convertToIrAndActualize(
-            //    fir2IrExtensions = Fir2IrExtensions.Default,
-            //    fir2IrConfiguration = Fir2IrConfiguration.forKlibCompilation( // @formatter:off
-            //        compilerConfiguration = compilerConfiguration,
-            //        diagnosticReporter = diagnosticsCollector
-            //    ), // @formatter:on
-            //    irGeneratorExtensions = irExtensions,
-            //    irMangler = KonanManglerIr,
-            //    visibilityConverter = Fir2IrVisibilityConverter.Default,
-            //    kotlinBuiltIns = KonanBuiltIns(LockBasedStorageManager.NO_LOCKS),
-            //    typeSystemContextProvider = ::IrTypeSystemContextImpl,
-            //    specialAnnotationsProvider = null,
-            //    extraActualDeclarationExtractorsInitializer = { emptyList() }) TODO: reimplement this
-
-            //CompileTarget.JS -> firResult.convertToIrAndActualize(
-            //    fir2IrExtensions = Fir2IrExtensions.Default,
-            //    fir2IrConfiguration = Fir2IrConfiguration.forKlibCompilation( // @formatter:off
-            //        compilerConfiguration = compilerConfiguration,
-            //        diagnosticReporter = diagnosticsCollector
-            //    ), // @formatter:on
-            //    irGeneratorExtensions = irExtensions,
-            //    irMangler = JsManglerIr,
-            //    visibilityConverter = Fir2IrVisibilityConverter.Default,
-            //    kotlinBuiltIns = DefaultBuiltIns.Instance,
-            //    typeSystemContextProvider = ::IrTypeSystemContextImpl,
-            //    specialAnnotationsProvider = null,
-            //    extraActualDeclarationExtractorsInitializer = { emptyList() }) TODO: reimplement this
-        }
+        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = firResult.convertToIrAndActualizeForJvm(
+            fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration, JvmIrDeserializerImpl()),
+            configuration = compilerConfiguration,
+            diagnosticsReporter = diagnosticsCollector,
+            irGeneratorExtensions = irExtensions
+        )
         // Right now, linking is only supported on the JVM target
-        if (compileTarget == CompileTarget.JVM) {
-            val descriptorMangler = JvmDescriptorMangler(null)
-            val linker = JvmIrLinker(
-                currentModule = module.descriptor,
-                messageCollector = messageCollector,
-                typeSystem = JvmIrTypeSystemContext(irBuiltIns),
+        val descriptorMangler = JvmDescriptorMangler(null)
+        val linker = JvmIrLinker(
+            currentModule = module.descriptor,
+            messageCollector = messageCollector,
+            typeSystem = JvmIrTypeSystemContext(irBuiltIns),
+            symbolTable = symbolTable,
+            stubGenerator = DeclarationStubGeneratorImpl(
+                moduleDescriptor = module.descriptor,
                 symbolTable = symbolTable,
-                stubGenerator = DeclarationStubGeneratorImpl(
-                    moduleDescriptor = module.descriptor,
-                    symbolTable = symbolTable,
-                    irBuiltins = irBuiltIns,
-                    descriptorFinder = DescriptorByIdSignatureFinderImpl(
-                        moduleDescriptor = module.descriptor, mangler = descriptorMangler
-                    )
-                ),
-                manglerDesc = descriptorMangler,
-                enableIdSignatures = true
-            )
-            linker.init(module)
-            linker.postProcess(true)
-        }
+                irBuiltins = irBuiltIns,
+                descriptorFinder = DescriptorByIdSignatureFinderImpl(
+                    moduleDescriptor = module.descriptor, mangler = descriptorMangler
+                )
+            ),
+            manglerDesc = descriptorMangler,
+            enableIdSignatures = true
+        )
+        linker.init(module)
+        linker.postProcess(true)
         return CompileResult(
             source = source,
             firFile = files.first(),
