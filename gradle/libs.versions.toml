@@ -2,14 +2,14 @@
 
 java = "17"
 
-iridium = "1.8.0"
+iridium = "1.8.1"
 kotlin = "2.2.20" # https://github.com/JetBrains/kotlin/releases
 dokka = "2.1.0-Beta" # https://github.com/Kotlin/dokka/releases
-karmaConventions = "1.7.0" # https://github.com/karmakrafts/karma-conventions/tags
+karmaConventions = "1.7.1" # https://github.com/karmakrafts/karma-conventions/tags
 gradleNexus = "2.0.0" # https://github.com/gradle-nexus/publish-plugin/releases
-junit = "5.13.4" # https://github.com/junit-team/junit5/releases
-annotations = "26.0.2" # https://github.com/JetBrains/java-annotations/releases
-oshi = "6.8.3" # https://github.com/oshi/oshi/releases
+junit = "5.14.0" # https://github.com/junit-team/junit5/releases
+annotations = "26.0.2-1" # https://github.com/JetBrains/java-annotations/releases
+oshi = "6.9.0" # https://github.com/oshi/oshi/releases
 
 [libraries]
 
