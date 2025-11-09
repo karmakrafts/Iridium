@@ -43,7 +43,7 @@ tasks {
     val sourcesJar by getting {
         dependsOn(compileJava)
     }
-    val javadocJar = named<Jar>("javadocJar") {
+    val javadocJar by named<Jar>("javadocJar") {
         dependsOn(dokkaGeneratePublicationHtml)
         from(dokkaGeneratePublicationHtml)
     }
@@ -54,7 +54,7 @@ tasks {
         register("publishDocs", Copy::class) {
             dependsOn(javadocJar)
             mustRunAfter(javadocJar)
-            from(zipTree(javadocJar.get().outputs.files.first()))
+            from(zipTree(javadocJar.outputs.files.first()))
             into(docsDir)
         }
     }
