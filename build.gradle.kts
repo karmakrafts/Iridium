@@ -19,10 +19,10 @@ import dev.karmakrafts.conventions.apache2License
 import dev.karmakrafts.conventions.authenticatedSonatype
 import dev.karmakrafts.conventions.configureJava
 import dev.karmakrafts.conventions.defaultDependencyLocking
+import dev.karmakrafts.conventions.defaultDokkaConfig
 import dev.karmakrafts.conventions.setProjectInfo
 import dev.karmakrafts.conventions.setRepository
 import dev.karmakrafts.conventions.signPublications
-import java.time.ZonedDateTime
 
 plugins {
     java
@@ -38,10 +38,10 @@ group = "dev.karmakrafts.iridium"
 version = GitLabCI.getDefaultVersion(libs.versions.iridium)
 configureJava(rootProject.libs.versions.java)
 if (GitLabCI.isCI) defaultDependencyLocking()
+defaultDokkaConfig()
 
 java {
     withSourcesJar()
-    withJavadocJar()
 }
 
 dependencies {
@@ -59,29 +59,8 @@ tasks {
     val sourcesJar by getting {
         dependsOn(compileJava)
     }
-    val javadocJar by named<Jar>("javadocJar") {
-        dependsOn(dokkaGeneratePublicationHtml)
-        from(dokkaGeneratePublicationHtml)
-    }
     test {
         useJUnitPlatform()
-    }
-    System.getProperty("publishDocs.root")?.let { docsDir ->
-        register("publishDocs", Copy::class) {
-            dependsOn(javadocJar)
-            mustRunAfter(javadocJar)
-            from(zipTree(javadocJar.outputs.files.first()))
-            into(docsDir)
-        }
-    }
-}
-
-dokka {
-    moduleName = project.name
-    pluginsConfiguration {
-        html {
-            footerMessage = "&copy; ${ZonedDateTime.now().year} Karma Krafts"
-        }
     }
 }
 
