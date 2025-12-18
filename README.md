@@ -27,16 +27,8 @@ It currently has the following main features:
 First, add the official Maven Central repository to your `settings.gradle.kts`:
 
 ```kotlin
-pluginManagement {
-    repositories {
-        maven("https://central.sonatype.com/repository/maven-snapshots")
-        mavenCentral()
-    }
-}
-
 dependencyResolutionManagement {
     repositories {
-        maven("https://central.sonatype.com/repository/maven-snapshots")
         mavenCentral()
     }
 }
