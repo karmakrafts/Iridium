@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Karma Krafts
+ * Copyright 2026 Karma Krafts
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,6 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
  *
  * @param typeMatcher The lambda containing assertions to apply to the return type
  */
-@CompilerAssertionDsl
 inline fun IrElementMatcher<out IrFunction>.returns(typeMatcher: IrTypeMatcher<IrType>.() -> Unit) {
     IrTypeMatcher( // @formatter:off
         scopeName = scopeName,
@@ -198,7 +197,6 @@ inline fun IrElementMatcher<out IrFunction>.returns(typeMatcher: IrTypeMatcher<I
  * @param typeMatcher The lambda containing assertions to apply to the parameter's type
  * @throws NullPointerException if no parameter with the given name is found
  */
-@CompilerAssertionDsl
 inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
     name: String,
     typeMatcher: IrTypeMatcher<IrType>.() -> Unit
@@ -220,7 +218,6 @@ inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
  * @param typeMatcher The lambda containing assertions to apply to the parameter's type
  * @throws IndexOutOfBoundsException if the index is out of bounds
  */
-@CompilerAssertionDsl
 inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
     index: Int,
     typeMatcher: IrTypeMatcher<IrType>.() -> Unit
@@ -242,7 +239,6 @@ inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
  * @param type The IR type of the annotation to check for
  * @throws AssertionError if the element doesn't have the specified annotation
  */
-@CompilerAssertionDsl
 fun <T> IrElementMatcher<T>.hasAnnotation(type: IrType) where T : IrElement, T : IrAnnotationContainer {
     assert(element.annotations.any { it.type == type }) {
         "Expected annotation of type ${type.render()} in:\n\n${element.renderIrTree()}\n"
@@ -256,7 +252,6 @@ fun <T> IrElementMatcher<T>.hasAnnotation(type: IrType) where T : IrElement, T :
  * @param id The ClassId of the annotation to check for
  * @return The result of calling [hasAnnotation] with the IR type corresponding to the given ClassId
  */
-@CompilerAssertionDsl
 fun <T> IrElementMatcher<T>.hasAnnotation(id: ClassId) where T : IrElement, T : IrAnnotationContainer =
     hasAnnotation(type(id))
 
@@ -266,7 +261,6 @@ fun <T> IrElementMatcher<T>.hasAnnotation(id: ClassId) where T : IrElement, T : 
  * @param name The name of the type parameter to check for
  * @throws AssertionError if the element doesn't have a type parameter with the specified name
  */
-@CompilerAssertionDsl
 fun IrElementMatcher<out IrTypeParametersContainer>.hasTypeParameter(name: String) {
     assert(element.typeParameters.any { it.name.asString() == name }) {
         "Expected type parameter named '$name' in:\n\n${element.renderIrTree()}\n"
@@ -279,7 +273,6 @@ fun IrElementMatcher<out IrTypeParametersContainer>.hasTypeParameter(name: Strin
  * @param index The zero-based index of the type parameter to check for
  * @throws AssertionError if the element doesn't have a type parameter at the specified index
  */
-@CompilerAssertionDsl
 fun IrElementMatcher<out IrTypeParametersContainer>.hasTypeParameter(index: Int) {
     assert(index in element.typeParameters.indices) {
         "Expected type parameter at index '$index' in:\n\n${element.renderIrTree()}\n"
@@ -292,7 +285,6 @@ fun IrElementMatcher<out IrTypeParametersContainer>.hasTypeParameter(index: Int)
  * @param name The name to check for
  * @throws AssertionError if the element doesn't have the specified name
  */
-@CompilerAssertionDsl
 fun IrElementMatcher<out IrDeclarationWithName>.isNamed(name: String) {
     assert(element.name.asString() == name) {
         "No declaration named '$name' in $scopeName:\n\n${element.renderIrTree()}\n"

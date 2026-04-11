@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Karma Krafts
+ * Copyright 2026 Karma Krafts
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package dev.karmakrafts.iridium.pipeline
 import dev.karmakrafts.iridium.util.DelegatingDiagnosticsReporter
 import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.JvmPackagePartProvider
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
 import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.convertToIrAndActualizeForJvm
@@ -43,14 +43,13 @@ import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSourceModuleData
 import org.jetbrains.kotlin.fir.backend.jvm.JvmFir2IrExtensions
-import org.jetbrains.kotlin.fir.caches.FirThreadUnsafeCachesFactory
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.pipeline.FirResult
-import org.jetbrains.kotlin.fir.pipeline.ModuleCompilerAnalyzedOutput
+import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
+import org.jetbrains.kotlin.fir.pipeline.SingleModuleFrontendOutput
 import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
-import org.jetbrains.kotlin.fir.session.FirSharableJavaComponents
+import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory.Context
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
@@ -108,41 +107,29 @@ class CompilerPipeline internal constructor(
 
     private val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
 
-    //private val sessionProvider: FirProjectSessionProvider = FirProjectSessionProvider()
-    private val packagePartProvider: JvmPackagePartProvider by lazy {
-        environment.createPackagePartProvider(
-            globalSearchScope
-        )
-    }
-    private val predefJavaComponents: FirSharableJavaComponents by lazy {
-        FirSharableJavaComponents(
-            FirThreadUnsafeCachesFactory
-        )
-    }
+    private val context: Context = Context(
+        configuration = compilerConfiguration,
+        projectEnvironment = projectEnvironment,
+        librariesScope = fileSearchScope,
+        registerJvmDeserializationExtension = false
+    )
 
     private val sharedLibSession: FirSession = FirJvmSessionFactory.createSharedLibrarySession(
         mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
-        //sessionProvider = sessionProvider,
-        projectEnvironment = projectEnvironment,
         extensionRegistrars = firExtensions,
-        packagePartProvider = packagePartProvider,
         languageVersionSettings = languageVersionSettings,
-        predefinedJavaComponents = predefJavaComponents
+        context = context
     )
 
     private val libModuleData: FirModuleData = createModuleData("${compilerConfiguration.moduleName!!}-lib")
 
     @Suppress("UNUSED") // This needs to be created and held for the lifetime of the pipeline
     private val libSession: FirSession = FirJvmSessionFactory.createLibrarySession(
-        // sessionProvider = sessionProvider,
         sharedLibrarySession = sharedLibSession,
         moduleDataProvider = SingleModuleDataProvider(libModuleData),
-        projectEnvironment = projectEnvironment,
         extensionRegistrars = firExtensions,
-        scope = fileSearchScope,
-        packagePartProvider = packagePartProvider,
         languageVersionSettings = languageVersionSettings,
-        predefinedJavaComponents = predefJavaComponents
+        context = context
     )
 
     private val sourceModuleData: FirModuleData =
@@ -150,13 +137,11 @@ class CompilerPipeline internal constructor(
 
     private val sourceSession: FirSession = FirJvmSessionFactory.createSourceSession(
         moduleData = sourceModuleData,
-        //sessionProvider = sessionProvider,
         javaSourcesScope = fileSearchScope,
-        projectEnvironment = projectEnvironment,
         createIncrementalCompilationSymbolProviders = { null },
         extensionRegistrars = firExtensions,
         configuration = compilerConfiguration,
-        predefinedJavaComponents = null,
+        context = context,
         needRegisterJavaElementFinder = false,
         init = {},
         isForLeafHmppModule = false
@@ -169,6 +154,7 @@ class CompilerPipeline internal constructor(
         messageCollector = messageCollector,
     )
 
+    @OptIn(K1Deprecation::class) // TODO: migrate to K2 alternative
     private fun createEnvironment(): KotlinCoreEnvironment = KotlinCoreEnvironment.createForProduction( // @formatter:off
         configuration = compilerConfiguration,
         projectDisposable = disposable,
@@ -210,8 +196,10 @@ class CompilerPipeline internal constructor(
             ktFiles = listOf(input),
             diagnosticsReporter = diagnosticsCollector
         ) // @formatter:on
-        val firResult = FirResult(listOf(ModuleCompilerAnalyzedOutput(sourceSession, scopeSession, files)))
-        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = firResult.convertToIrAndActualizeForJvm(
+
+        val singleModuleOutputs = listOf(SingleModuleFrontendOutput(sourceSession, scopeSession, files))
+        val allModulesOutput = AllModulesFrontendOutput(singleModuleOutputs)
+        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = allModulesOutput.convertToIrAndActualizeForJvm(
             fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration, JvmIrDeserializerImpl()),
             configuration = compilerConfiguration,
             diagnosticsReporter = diagnosticsCollector,

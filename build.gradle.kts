@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Karma Krafts
+ * Copyright 2026 Karma Krafts
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ import dev.karmakrafts.conventions.apache2License
 import dev.karmakrafts.conventions.authenticatedSonatype
 import dev.karmakrafts.conventions.configureJava
 import dev.karmakrafts.conventions.defaultDependencyLocking
-import dev.karmakrafts.conventions.defaultDokkaConfig
 import dev.karmakrafts.conventions.setProjectInfo
 import dev.karmakrafts.conventions.setRepository
 import dev.karmakrafts.conventions.signPublications
+import dev.karmakrafts.conventions.dokka.configureDokka
 
 plugins {
     java
@@ -38,7 +38,10 @@ group = "dev.karmakrafts.iridium"
 version = GitLabCI.getDefaultVersion(libs.versions.iridium)
 configureJava(rootProject.libs.versions.java)
 if (GitLabCI.isCI) defaultDependencyLocking()
-defaultDokkaConfig()
+
+configureDokka {
+    withKotlin()
+}
 
 java {
     withSourcesJar()
@@ -48,7 +51,6 @@ dependencies {
     api(libs.junit.api)
     api(libs.kotlin.compiler.embeddable)
     api(libs.kotlin.native.compiler.embeddable)
-    api(libs.kotlin.stdlib)
     api(libs.kotlin.reflect)
     api(libs.kotlin.test)
     api(libs.annotations)

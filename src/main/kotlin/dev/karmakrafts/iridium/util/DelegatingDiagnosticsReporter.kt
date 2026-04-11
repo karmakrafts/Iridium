@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Karma Krafts
+ * Copyright 2026 Karma Krafts
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,6 @@ internal class DelegatingDiagnosticsReporter(
     override val hasErrors: Boolean
         get() = messageCollector.hasErrors()
 
-    override val rawReporter: RawReporter = RawReporter { message, severity ->
-        messageCollector.report(severity, message)
-    }
-
     override fun report(
         diagnostic: KtDiagnostic?, context: DiagnosticContext
     ) {
@@ -51,6 +47,7 @@ internal class DelegatingDiagnosticsReporter(
             Severity.WARNING -> CompilerMessageSeverity.WARNING
             Severity.ERROR -> CompilerMessageSeverity.ERROR
             Severity.FIXED_WARNING -> CompilerMessageSeverity.FIXED_WARNING
+            Severity.STRONG_WARNING -> CompilerMessageSeverity.STRONG_WARNING
         }
         if (diagnostic !is DiagnosticMarker) {
             messageCollector.report(severity, diagnostic.renderMessage())
