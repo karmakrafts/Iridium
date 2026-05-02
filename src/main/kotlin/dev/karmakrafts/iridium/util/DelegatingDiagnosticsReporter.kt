@@ -16,6 +16,7 @@
 
 package dev.karmakrafts.iridium.util
 
+import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -32,7 +33,7 @@ internal class DelegatingDiagnosticsReporter(
     override val diagnostics: List<KtDiagnostic>
         get() = emptyList()
 
-    override val diagnosticsByFilePath: Map<String?, List<KtDiagnostic>>
+    override val diagnosticsByFile: Map<KtSourceFile?, List<KtDiagnostic>>
         get() = emptyMap()
 
     override val hasErrors: Boolean
