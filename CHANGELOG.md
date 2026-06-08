@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+### Added
+
+- Added `CompilerTarget` enum to define the compilation target of a test pipeline
+- Added support for Kotlin/Native compilation
+- Added support for Kotlin/JS compilation
+- Added support for Kotlin/WASM compilation
+
+### Changed
+
+- Updated to Kotlin 2.4.0
+- Updated to Karma Conventions 1.17.0
+- Downgraded to Gradle 9.4.1 because of IDEA compatibility regression
+
 ## [1.11.1]
 
 ### Changed
