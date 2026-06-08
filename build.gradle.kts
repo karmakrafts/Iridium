@@ -19,11 +19,11 @@ import dev.karmakrafts.conventions.apache2License
 import dev.karmakrafts.conventions.authenticatedSonatype
 import dev.karmakrafts.conventions.configureJava
 import dev.karmakrafts.conventions.defaultDependencyLocking
+import dev.karmakrafts.conventions.dokka.configureDokka
+import dev.karmakrafts.conventions.kotlin.defaultCompilerOptions
 import dev.karmakrafts.conventions.setProjectInfo
 import dev.karmakrafts.conventions.setRepository
 import dev.karmakrafts.conventions.signPublications
-import dev.karmakrafts.conventions.dokka.configureDokka
-import dev.karmakrafts.conventions.kotlin.defaultCompilerOptions
 
 plugins {
     java
@@ -54,15 +54,16 @@ kotlin {
 
 dependencies {
     api(libs.junit.api)
-    api(libs.kotlin.compiler.embeddable)
-    api(libs.kotlin.native.compiler.embeddable)
-    api(libs.kotlin.reflect)
-    api(libs.kotlin.test)
     api(libs.annotations)
+    implementation(libs.kotlin.compiler.embeddable)
+    implementation(libs.kotlin.native.compiler.embeddable)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.kotlin.test)
+    implementation(libs.oshi.core)
 }
 
 tasks {
-    val sourcesJar by getting {
+    named("sourcesJar") {
         dependsOn(compileJava)
     }
     test {

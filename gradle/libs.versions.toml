@@ -9,6 +9,7 @@ karmaConventions = "1.17.0" # https://github.com/karmakrafts/karma-conventions/t
 gradleNexus = "2.0.0" # https://github.com/gradle-nexus/publish-plugin/releases
 junit = "5.14.4" # https://github.com/junit-team/junit5/releases
 annotations = "26.1.0" # https://github.com/JetBrains/java-annotations/releases
+oshi = "7.3.0" # https://github.com/oshi/oshi/releases
 
 [libraries]
 
@@ -18,6 +19,7 @@ kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-em
 kotlin-native-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-native-compiler-embeddable", version.ref = "kotlin" }
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
+oshi-core = { module = "com.github.oshi:oshi-core", version.ref = "oshi" }
 
 [plugins]
 

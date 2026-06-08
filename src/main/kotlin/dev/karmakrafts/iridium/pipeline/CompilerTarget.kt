@@ -16,11 +16,25 @@
 
 package dev.karmakrafts.iridium.pipeline
 
-enum class CompilerTarget {
+import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
+
+/**
+ * The target for which to compile Kotlin code during a compiler pipeline invocation.
+ * Defines environment config and target platform.
+ */
+enum class CompilerTarget( // @formatter:off
+    val environmentConfigFiles: EnvironmentConfigFiles,
+    val targetPlatform: TargetPlatform
+) { // @formatter:on
     // @formatter:off
-    JVM,
-    NATIVE,
-    JS,
-    WASM
+    JVM   (EnvironmentConfigFiles.JVM_CONFIG_FILES, JvmPlatforms.defaultJvmPlatform),
+    NATIVE(EnvironmentConfigFiles.NATIVE_CONFIG_FILES, NativePlatforms.unspecifiedNativePlatform),
+    JS    (EnvironmentConfigFiles.JS_CONFIG_FILES, JsPlatforms.defaultJsPlatform),
+    WASM  (EnvironmentConfigFiles.WASM_CONFIG_FILES, WasmPlatforms.wasmJs)
     // @formatter:on
 }
