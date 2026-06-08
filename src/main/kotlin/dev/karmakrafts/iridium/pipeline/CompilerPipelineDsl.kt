@@ -23,9 +23,9 @@ import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.CompilerConfiguration.Internals
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -53,7 +53,6 @@ annotation class CompilerPipelineDsl
  * This class provides methods for configuring various aspects of the compiler pipeline,
  * such as language version settings, compiler configuration, and extensions.
  */
-@OptIn(Internals::class)
 @CompilerPipelineDsl
 class CompilerPipelineBuilder @PublishedApi internal constructor() {
     private val irExtensions: ArrayList<IrGenerationExtension> = ArrayList()
@@ -63,12 +62,17 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
     internal var messageCallback: CompilerMessageCallback = CompilerMessageCallback {}
 
     @PublishedApi
-    internal val compilerConfig: CompilerConfiguration = CompilerConfiguration()
+    internal val compilerConfig: CompilerConfiguration = CompilerConfiguration.create()
 
     /**
      * The language version settings to use for compilation.
      */
     var languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT
+
+    /**
+     * The platform to compile the Kotlin code for.
+     */
+    var compilerTarget: CompilerTarget = CompilerTarget.JVM
 
     /**
      * Registers a callback for compiler messages.
@@ -134,6 +138,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
         val messageCollector = RecordingMessageCollector(messageCallback)
         compilerConfig.messageCollector = messageCollector
         return CompilerPipeline(
+            compilerTarget = compilerTarget,
             languageVersionSettings = languageVersionSettings,
             firExtensions = firExtensionRegistrars.map { it(messageCollector) },
             irExtensions = irExtensions,

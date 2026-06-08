@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.cli.CliDiagnostics
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
@@ -71,6 +72,10 @@ import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
  * and compiler configuration.
  */
 class CompilerPipeline internal constructor(
+    /**
+     * The platform to compile the Kotlin code for.
+     */
+    val compilerTarget: CompilerTarget = CompilerTarget.JVM,
 
     /**
      * The language version settings to use for compilation.
@@ -87,7 +92,7 @@ class CompilerPipeline internal constructor(
      */
     val irExtensions: List<IrGenerationExtension> = emptyList(),
 
-    @PublishedApi internal val compilerConfiguration: CompilerConfiguration
+    @PublishedApi internal val compilerConfiguration: CompilerConfiguration = CompilerConfiguration.create(),
 ) : AutoCloseable {
     private val disposable: Disposable = Disposer.newDisposable()
 
