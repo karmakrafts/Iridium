@@ -20,6 +20,7 @@ import dev.karmakrafts.iridium.matcher.hasAnnotation
 import dev.karmakrafts.iridium.matcher.hasTypeParameter
 import dev.karmakrafts.iridium.matcher.hasValueParameter
 import dev.karmakrafts.iridium.matcher.returns
+import dev.karmakrafts.iridium.pipeline.CompilerTarget
 import dev.karmakrafts.iridium.pipeline.defaultPipelineSpec
 import dev.karmakrafts.iridium.pipeline.withApi
 import org.intellij.lang.annotations.Language
@@ -83,6 +84,30 @@ class CompilerSmokeTest {
     @Test
     fun `Compile Kotlin JVM program`() = runCompilerTest {
         checkDefaultProgram()
+    }
+
+    @Test
+    fun `Compile Kotlin Native program`() = runCompilerTest {
+        checkDefaultProgram()
+        pipeline {
+            compilerTarget = CompilerTarget.NATIVE
+        }
+    }
+
+    @Test
+    fun `Compile Kotlin JS program`() = runCompilerTest {
+        checkDefaultProgram()
+        pipeline {
+            compilerTarget = CompilerTarget.JS
+        }
+    }
+
+    @Test
+    fun `Compile Kotlin WASM program`() = runCompilerTest {
+        checkDefaultProgram()
+        pipeline {
+            compilerTarget = CompilerTarget.WASM
+        }
     }
 
     @Test

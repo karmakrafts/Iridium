@@ -22,6 +22,8 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
+import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerIr
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.cli.CliDiagnostics
 import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.config.messageCollector
@@ -42,20 +45,38 @@ import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSourceModuleData
+import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
+import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
+import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
 import org.jetbrains.kotlin.fir.backend.jvm.JvmFir2IrExtensions
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
 import org.jetbrains.kotlin.fir.pipeline.SingleModuleFrontendOutput
 import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
+import org.jetbrains.kotlin.fir.pipeline.convertToIrAndActualize
+import org.jetbrains.kotlin.fir.session.FirJsSessionFactory
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory.Context
+import org.jetbrains.kotlin.fir.session.FirNativeSessionFactory
+import org.jetbrains.kotlin.fir.session.FirWasmSessionFactory
+import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
+import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
+import org.jetbrains.kotlin.js.config.libraries
+import org.jetbrains.kotlin.library.KotlinLibrary
+import org.jetbrains.kotlin.library.loader.KlibLoader
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
+import java.io.File
 
 /**
  * A compiler pipeline that handles the compilation of Kotlin source code.
@@ -113,45 +134,37 @@ class CompilerPipeline internal constructor(
 
     private val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
 
-    private val context: Context = Context(
-        configuration = compilerConfiguration,
-        projectEnvironment = projectEnvironment,
-        librariesScope = librariesScope,
-        registerJvmDeserializationExtension = false
-    )
+    private val targetPlatform: TargetPlatform = when (compilerTarget) {
+        CompilerTarget.JVM -> JvmPlatforms.defaultJvmPlatform
+        CompilerTarget.NATIVE -> NativePlatforms.unspecifiedNativePlatform
+        CompilerTarget.JS -> JsPlatforms.defaultJsPlatform
+        CompilerTarget.WASM -> WasmPlatforms.wasmJs
+    }
 
-    private val sharedLibSession: FirSession = FirJvmSessionFactory.createSharedLibrarySession(
-        mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
-        extensionRegistrars = firExtensions,
-        languageVersionSettings = languageVersionSettings,
-        context = context
-    )
+    private val wasmTarget: WasmTarget = WasmTarget.JS
+
+    private val jvmContext: Context by lazy {
+        Context(
+            configuration = compilerConfiguration,
+            projectEnvironment = projectEnvironment,
+            librariesScope = librariesScope,
+            registerJvmDeserializationExtension = false
+        )
+    }
+
+    private val sharedLibSession: FirSession = createSharedLibrarySession()
+
+    private val resolvedKlibLibraries: List<KotlinLibrary> by lazy { resolveKlibLibraries() }
 
     private val libModuleData: FirModuleData = createModuleData("${compilerConfiguration.moduleName!!}-lib")
 
     @Suppress("UNUSED") // This needs to be created and held for the lifetime of the pipeline
-    private val libSession: FirSession = FirJvmSessionFactory.createLibrarySession(
-        sharedLibrarySession = sharedLibSession,
-        moduleDataProvider = SingleModuleDataProvider(libModuleData),
-        extensionRegistrars = firExtensions,
-        languageVersionSettings = languageVersionSettings,
-        context = context
-    )
+    private val libSession: FirSession = createLibrarySession()
 
     private val sourceModuleData: FirModuleData =
         createModuleData(compilerConfiguration.moduleName!!, listOf(libModuleData))
 
-    private val sourceSession: FirSession = FirJvmSessionFactory.createSourceSession(
-        moduleData = sourceModuleData,
-        javaSourcesScope = javaSourcesScope,
-        createIncrementalCompilationSymbolProviders = { null },
-        extensionRegistrars = firExtensions,
-        configuration = compilerConfiguration,
-        context = context,
-        needRegisterJavaElementFinder = false,
-        init = {},
-        isForLeafHmppModule = false
-    )
+    private val sourceSession: FirSession = createSourceSession()
 
     private fun initializeDiagnosticFactoriesStorage() {
         if (compilerConfiguration.diagnosticFactoriesStorage != null) return
@@ -161,10 +174,109 @@ class CompilerPipeline internal constructor(
     }
 
     private fun createProjectEnvironment(): VfsBasedProjectEnvironment = createProjectEnvironment(
-        configuration = compilerConfiguration,
-        parentDisposable = disposable,
-        configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES
+        configuration = compilerConfiguration, parentDisposable = disposable, configFiles = when (compilerTarget) {
+            CompilerTarget.JVM -> EnvironmentConfigFiles.JVM_CONFIG_FILES
+            CompilerTarget.NATIVE -> EnvironmentConfigFiles.NATIVE_CONFIG_FILES
+            CompilerTarget.JS -> EnvironmentConfigFiles.JS_CONFIG_FILES
+            CompilerTarget.WASM -> EnvironmentConfigFiles.WASM_CONFIG_FILES
+        }
     )
+
+    private fun createSharedLibrarySession(): FirSession = when (compilerTarget) {
+        CompilerTarget.JVM -> FirJvmSessionFactory.createSharedLibrarySession(
+            mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
+            extensionRegistrars = firExtensions,
+            languageVersionSettings = languageVersionSettings,
+            context = jvmContext
+        )
+
+        CompilerTarget.NATIVE -> FirNativeSessionFactory.createSharedLibrarySession(
+            mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
+            configuration = compilerConfiguration,
+            extensionRegistrars = firExtensions
+        )
+
+        CompilerTarget.JS -> FirJsSessionFactory.createSharedLibrarySession(
+            mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
+            configuration = compilerConfiguration,
+            extensionRegistrars = firExtensions
+        )
+
+        CompilerTarget.WASM -> FirWasmSessionFactory.of(wasmTarget).createSharedLibrarySession(
+            mainModuleName = Name.special("<${compilerConfiguration.moduleName!!}>"),
+            configuration = compilerConfiguration,
+            extensionRegistrars = firExtensions
+        )
+    }
+
+    private fun createLibrarySession(): FirSession = when (compilerTarget) {
+        CompilerTarget.JVM -> FirJvmSessionFactory.createLibrarySession(
+            sharedLibrarySession = sharedLibSession,
+            moduleDataProvider = SingleModuleDataProvider(libModuleData),
+            extensionRegistrars = firExtensions,
+            languageVersionSettings = languageVersionSettings,
+            context = jvmContext
+        )
+
+        CompilerTarget.NATIVE -> FirNativeSessionFactory.createLibrarySession(
+            resolvedLibraries = resolvedKlibLibraries,
+            sharedLibrarySession = sharedLibSession,
+            moduleDataProvider = SingleModuleDataProvider(libModuleData),
+            extensionRegistrars = firExtensions,
+            compilerConfiguration = compilerConfiguration
+        )
+
+        CompilerTarget.JS -> FirJsSessionFactory.createLibrarySession(
+            resolvedLibraries = resolvedKlibLibraries,
+            sharedLibrarySession = sharedLibSession,
+            moduleDataProvider = SingleModuleDataProvider(libModuleData),
+            extensionRegistrars = firExtensions,
+            compilerConfiguration = compilerConfiguration
+        )
+
+        CompilerTarget.WASM -> FirWasmSessionFactory.of(wasmTarget).createLibrarySession(
+            resolvedLibraries = resolvedKlibLibraries,
+            sharedLibrarySession = sharedLibSession,
+            moduleDataProvider = SingleModuleDataProvider(libModuleData),
+            extensionRegistrars = firExtensions,
+            compilerConfiguration = compilerConfiguration
+        )
+    }
+
+    private fun createSourceSession(): FirSession = when (compilerTarget) {
+        CompilerTarget.JVM -> FirJvmSessionFactory.createSourceSession(
+            moduleData = sourceModuleData,
+            javaSourcesScope = javaSourcesScope,
+            createIncrementalCompilationSymbolProviders = { null },
+            extensionRegistrars = firExtensions,
+            configuration = compilerConfiguration,
+            context = jvmContext,
+            needRegisterJavaElementFinder = false,
+            init = {},
+            isForLeafHmppModule = false
+        )
+
+        CompilerTarget.NATIVE -> FirNativeSessionFactory.createSourceSession(
+            moduleData = sourceModuleData,
+            extensionRegistrars = firExtensions,
+            configuration = compilerConfiguration,
+            isForLeafHmppModule = false,
+            init = {})
+
+        CompilerTarget.JS -> FirJsSessionFactory.createSourceSession(
+            moduleData = sourceModuleData,
+            extensionRegistrars = firExtensions,
+            configuration = compilerConfiguration,
+            isForLeafHmppModule = false,
+            init = {})
+
+        CompilerTarget.WASM -> FirWasmSessionFactory.of(wasmTarget).createSourceSession(
+            moduleData = sourceModuleData,
+            extensionRegistrars = firExtensions,
+            configuration = compilerConfiguration,
+            isForLeafHmppModule = false,
+            init = {})
+    }
 
     private fun createModuleData( // @formatter:off
         name: String,
@@ -174,8 +286,48 @@ class CompilerPipeline internal constructor(
         dependencies = dependencies,
         dependsOnDependencies = emptyList(),
         friendDependencies = emptyList(),
-        platform = JvmPlatforms.defaultJvmPlatform
+        platform = targetPlatform
     )
+
+    private fun resolveKlibLibraries(): List<KotlinLibrary> {
+        if (compilerTarget == CompilerTarget.JVM) return emptyList()
+        val paths = (compilerConfiguration.libraries + defaultKlibLibraryPaths()).distinct()
+        if (paths.isEmpty()) return emptyList()
+        return KlibLoader { libraryPaths(paths) }.load().librariesStdlibFirst
+    }
+
+    private fun defaultKlibLibraryPaths(): List<String> = when (compilerTarget) {
+        CompilerTarget.JVM -> emptyList()
+        CompilerTarget.NATIVE -> listOfNotNull(defaultNativeStdlibPath())
+        CompilerTarget.JS -> listOfNotNull(
+            defaultGradleKlibPath(
+                "kotlin-stdlib-js", "kotlin-stdlib-js-${KotlinCompilerVersion.VERSION}.klib"
+            )
+        )
+
+        CompilerTarget.WASM -> listOfNotNull(
+            defaultGradleKlibPath(
+                "kotlin-stdlib-wasm-js", "kotlin-stdlib-wasm-js-${KotlinCompilerVersion.VERSION}.klib"
+            )
+        )
+    }
+
+    private fun defaultNativeStdlibPath(): String? {
+        val version = KotlinCompilerVersion.VERSION
+        val home = System.getProperty("user.home") ?: return null
+        return File(
+            home, ".konan/kotlin-native-prebuilt-linux-x86_64-$version/klib/common/stdlib"
+        ).takeIf { it.exists() }?.absolutePath
+    }
+
+    private fun defaultGradleKlibPath(moduleName: String, fileName: String): String? {
+        val gradleHome =
+            System.getenv("GRADLE_USER_HOME")?.let(::File) ?: File(System.getProperty("user.home"), ".gradle")
+        val moduleDir = File(
+            gradleHome, "caches/modules-2/files-2.1/org.jetbrains.kotlin/$moduleName/${KotlinCompilerVersion.VERSION}"
+        )
+        return moduleDir.walkTopDown().firstOrNull { it.isFile && it.name == fileName }?.absolutePath
+    }
 
     /**
      * Compiles the given Kotlin source code and returns the compilation result.
@@ -204,31 +356,60 @@ class CompilerPipeline internal constructor(
 
         val singleModuleOutputs = listOf(SingleModuleFrontendOutput(sourceSession, scopeSession, files))
         val allModulesOutput = AllModulesFrontendOutput(singleModuleOutputs)
-        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = allModulesOutput.convertToIrAndActualizeForJvm(
-            fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration),
-            configuration = compilerConfiguration,
-            diagnosticsReporter = diagnosticsCollector,
-            irGeneratorExtensions = irExtensions
-        )
-        // Right now, linking is only supported on the JVM target
-        val descriptorMangler = JvmDescriptorMangler(null)
-        val linker = JvmIrLinker(
-            currentModule = module.descriptor,
-            messageCollector = messageCollector,
-            typeSystem = JvmIrTypeSystemContext(irBuiltIns),
-            symbolTable = symbolTable,
-            stubGenerator = DeclarationStubGeneratorImpl(
-                moduleDescriptor = module.descriptor,
+        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = when (compilerTarget) {
+            CompilerTarget.JVM -> allModulesOutput.convertToIrAndActualizeForJvm(
+                fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration),
+                configuration = compilerConfiguration,
+                diagnosticsReporter = diagnosticsCollector,
+                irGeneratorExtensions = irExtensions
+            )
+
+            CompilerTarget.NATIVE -> allModulesOutput.convertToIrAndActualize(
+                fir2IrExtensions = Fir2IrExtensions.Default,
+                fir2IrConfiguration = Fir2IrConfiguration.forKlibCompilation(
+                    compilerConfiguration, diagnosticsCollector
+                ),
+                irGeneratorExtensions = irExtensions,
+                irMangler = KonanManglerIr,
+                visibilityConverter = Fir2IrVisibilityConverter.Default,
+                kotlinBuiltIns = DefaultBuiltIns.Instance,
+                typeSystemContextProvider = ::IrTypeSystemContextImpl,
+                specialAnnotationsProvider = null,
+                extraActualDeclarationExtractorsInitializer = { emptyList() })
+
+            CompilerTarget.JS, CompilerTarget.WASM -> allModulesOutput.convertToIrAndActualize(
+                fir2IrExtensions = Fir2IrExtensions.Default,
+                fir2IrConfiguration = Fir2IrConfiguration.forKlibCompilation(
+                    compilerConfiguration, diagnosticsCollector
+                ),
+                irGeneratorExtensions = irExtensions,
+                irMangler = JsManglerIr,
+                visibilityConverter = Fir2IrVisibilityConverter.Default,
+                kotlinBuiltIns = DefaultBuiltIns.Instance,
+                typeSystemContextProvider = ::IrTypeSystemContextImpl,
+                specialAnnotationsProvider = null,
+                extraActualDeclarationExtractorsInitializer = { emptyList() })
+        }
+        if (compilerTarget == CompilerTarget.JVM) {
+            val descriptorMangler = JvmDescriptorMangler(null)
+            val linker = JvmIrLinker(
+                currentModule = module.descriptor,
+                messageCollector = messageCollector,
+                typeSystem = JvmIrTypeSystemContext(irBuiltIns),
                 symbolTable = symbolTable,
-                irBuiltins = irBuiltIns,
-                descriptorFinder = DescriptorByIdSignatureFinderImpl(
-                    moduleDescriptor = module.descriptor, mangler = descriptorMangler
-                )
-            ),
-            manglerDesc = descriptorMangler
-        )
-        linker.init(module)
-        linker.postProcess(true)
+                stubGenerator = DeclarationStubGeneratorImpl(
+                    moduleDescriptor = module.descriptor,
+                    symbolTable = symbolTable,
+                    irBuiltins = irBuiltIns,
+                    descriptorFinder = DescriptorByIdSignatureFinderImpl(
+                        moduleDescriptor = module.descriptor, mangler = descriptorMangler
+                    )
+                ),
+                manglerDesc = descriptorMangler
+            )
+            linker.init(module)
+            linker.postProcess(true)
+        }
         return CompileResult(
             source = source,
             firFile = files.first(),
