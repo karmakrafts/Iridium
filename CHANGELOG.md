@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.12.0]
+
 ### Added
 
 - Added `CompilerTarget` enum to define the compilation target of a test pipeline
