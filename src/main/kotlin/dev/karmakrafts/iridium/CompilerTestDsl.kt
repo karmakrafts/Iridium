@@ -20,6 +20,8 @@ import dev.karmakrafts.iridium.matcher.BasicAssertionScope
 import dev.karmakrafts.iridium.pipeline.CompilerPipelineSpec
 import dev.karmakrafts.iridium.pipeline.compilerPipeline
 import org.intellij.lang.annotations.Language
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * Marks classes and functions that are part of the compiler testing DSL.
@@ -229,6 +231,9 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
  * @param scope A lambda with receiver that configures the test scope
  */
 inline fun setupCompilerTest(scope: CompilerTestScope.() -> Unit) {
+    contract {
+        callsInPlace(scope, InvocationKind.EXACTLY_ONCE)
+    }
     CompilerTestScope().scope()
 }
 
@@ -243,6 +248,9 @@ inline fun setupCompilerTest(scope: CompilerTestScope.() -> Unit) {
  * @see CompilerTestScope.evaluate
  */
 inline fun runCompilerTest(scope: CompilerTestScope.() -> Unit) {
+    contract {
+        callsInPlace(scope, InvocationKind.EXACTLY_ONCE)
+    }
     val scope = CompilerTestScope()
     scope.scope()
     scope.evaluate()

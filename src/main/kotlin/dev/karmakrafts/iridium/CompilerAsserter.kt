@@ -20,6 +20,8 @@ import dev.karmakrafts.iridium.matcher.IncompleteMessageMatcher
 import dev.karmakrafts.iridium.matcher.IncompleteMessageMatcherSpec
 import dev.karmakrafts.iridium.matcher.MessageMatcher
 import dev.karmakrafts.iridium.pipeline.CompileResult
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * A class for asserting expectations about compiler diagnostic messages.
@@ -39,6 +41,9 @@ class CompilerAsserter internal constructor() {
      * @return A [MessageMatcher] that can be further configured with occurrence expectations
      */
     inline infix fun shouldReport(spec: IncompleteMessageMatcherSpec): MessageMatcher {
+        contract {
+            callsInPlace(spec, InvocationKind.EXACTLY_ONCE)
+        }
         val messageMatcher = IncompleteMessageMatcher()
         messageMatcher.spec()
         val matcher = MessageMatcher(messageMatcher)
@@ -54,6 +59,9 @@ class CompilerAsserter internal constructor() {
      * @param spec A specification that configures what kind of message should not appear
      */
     inline infix fun shouldNotReport(crossinline spec: IncompleteMessageMatcherSpec) {
+        contract {
+            callsInPlace(spec, InvocationKind.EXACTLY_ONCE)
+        }
         shouldReport(spec) exactly 0
     }
 

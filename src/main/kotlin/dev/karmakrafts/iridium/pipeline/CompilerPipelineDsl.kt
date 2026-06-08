@@ -25,12 +25,15 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.CompilerConfiguration.Internals
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import java.io.File
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.reflect.KFunction
 
 /**
@@ -50,6 +53,7 @@ annotation class CompilerPipelineDsl
  * This class provides methods for configuring various aspects of the compiler pipeline,
  * such as language version settings, compiler configuration, and extensions.
  */
+@OptIn(Internals::class)
 @CompilerPipelineDsl
 class CompilerPipelineBuilder @PublishedApi internal constructor() {
     private val irExtensions: ArrayList<IrGenerationExtension> = ArrayList()
@@ -81,6 +85,9 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      * @param block The configuration block
      */
     inline fun config(block: CompilerConfiguration.() -> Unit) {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
         compilerConfig.block()
     }
 
@@ -179,5 +186,8 @@ fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
  */
 @TestOnly
 inline fun compilerPipeline(block: CompilerPipelineSpec = { defaultPipelineSpec() }): CompilerPipeline {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     return CompilerPipelineBuilder().apply(block).build()
 }

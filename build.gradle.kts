@@ -23,6 +23,7 @@ import dev.karmakrafts.conventions.setProjectInfo
 import dev.karmakrafts.conventions.setRepository
 import dev.karmakrafts.conventions.signPublications
 import dev.karmakrafts.conventions.dokka.configureDokka
+import dev.karmakrafts.conventions.kotlin.defaultCompilerOptions
 
 plugins {
     java
@@ -47,6 +48,10 @@ java {
     withSourcesJar()
 }
 
+kotlin {
+    defaultCompilerOptions()
+}
+
 dependencies {
     api(libs.junit.api)
     api(libs.kotlin.compiler.embeddable)
@@ -54,7 +59,6 @@ dependencies {
     api(libs.kotlin.reflect)
     api(libs.kotlin.test)
     api(libs.annotations)
-    implementation(libs.oshi.core)
 }
 
 tasks {

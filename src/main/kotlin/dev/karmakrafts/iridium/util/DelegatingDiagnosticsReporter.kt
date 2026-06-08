@@ -39,9 +39,13 @@ internal class DelegatingDiagnosticsReporter(
     override val hasErrors: Boolean
         get() = messageCollector.hasErrors()
 
-    override fun report(
-        diagnostic: KtDiagnostic?, context: DiagnosticContext
-    ) {
+    override val hasWarningsForWError: Boolean
+        get() = false
+
+    override fun report( // @formatter:off
+        diagnostic: KtDiagnostic?,
+        context: DiagnosticContext
+    ) { // @formatter:on
         if (diagnostic == null) return
         val severity = when (diagnostic.severity) {
             Severity.INFO -> CompilerMessageSeverity.INFO

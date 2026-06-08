@@ -71,22 +71,6 @@ class CompilerSmokeTest {
         checkDefaultProgram()
     }
 
-    //@Test
-    //fun `Compile Kotlin JS program`() = runCompilerTest {
-    //    pipeline {
-    //        target = CompileTarget.JS
-    //    }
-    //    checkDefaultProgram()
-    //} TODO: reimplement this
-
-    //@Test
-    //fun `Compile Kotlin Native program`() = runCompilerTest {
-    //    pipeline {
-    //        target = CompileTarget.NATIVE
-    //    }
-    //    checkDefaultProgram()
-    //} TODO: reimplement this
-
     @Test
     fun `Compile simple Kotlin program with older API`() = runCompilerTest {
         pipeline {
@@ -98,7 +82,7 @@ class CompilerSmokeTest {
     @Test
     fun `Compile simple Kotlin program with newer API`() = runCompilerTest {
         pipeline {
-            languageVersionSettings = LanguageVersion.KOTLIN_2_2 withApi ApiVersion.KOTLIN_2_2
+            languageVersionSettings = LanguageVersion.KOTLIN_2_4 withApi ApiVersion.KOTLIN_2_4
         }
         checkDefaultProgram()
     }

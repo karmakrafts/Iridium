@@ -22,8 +22,9 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
-import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
+import org.jetbrains.kotlin.cli.CliDiagnostics
+import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.config.moduleName
+import org.jetbrains.kotlin.diagnostics.KtRegisteredDiagnosticFactoriesStorage
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
@@ -98,6 +100,10 @@ class CompilerPipeline internal constructor(
 
     val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
 
+    init {
+        initializeDiagnosticFactoriesStorage()
+    }
+
     private val environment: KotlinCoreEnvironment = createEnvironment()
     private inline val project: Project get() = environment.project
     private val projectEnvironment: AbstractProjectEnvironment = createProjectEnvironment()
@@ -147,11 +153,17 @@ class CompilerPipeline internal constructor(
         isForLeafHmppModule = false
     )
 
+    private fun initializeDiagnosticFactoriesStorage() {
+        if (compilerConfiguration.diagnosticFactoriesStorage != null) return
+        compilerConfiguration.diagnosticFactoriesStorage = KtRegisteredDiagnosticFactoriesStorage().apply {
+            registerDiagnosticContainers(CliDiagnostics)
+        }
+    }
+
     private fun createProjectEnvironment(): AbstractProjectEnvironment = createProjectEnvironment(
         configuration = compilerConfiguration,
         parentDisposable = disposable,
-        configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES,
-        messageCollector = messageCollector,
+        configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES
     )
 
     @OptIn(K1Deprecation::class) // TODO: migrate to K2 alternative
@@ -200,7 +212,7 @@ class CompilerPipeline internal constructor(
         val singleModuleOutputs = listOf(SingleModuleFrontendOutput(sourceSession, scopeSession, files))
         val allModulesOutput = AllModulesFrontendOutput(singleModuleOutputs)
         val (module, _, pluginContext, _, irBuiltIns, symbolTable) = allModulesOutput.convertToIrAndActualizeForJvm(
-            fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration, JvmIrDeserializerImpl()),
+            fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration),
             configuration = compilerConfiguration,
             diagnosticsReporter = diagnosticsCollector,
             irGeneratorExtensions = irExtensions
@@ -220,8 +232,7 @@ class CompilerPipeline internal constructor(
                     moduleDescriptor = module.descriptor, mangler = descriptorMangler
                 )
             ),
-            manglerDesc = descriptorMangler,
-            enableIdSignatures = true
+            manglerDesc = descriptorMangler
         )
         linker.init(module)
         linker.postProcess(true)

@@ -21,6 +21,8 @@ import dev.karmakrafts.iridium.util.getChild
 import dev.karmakrafts.iridium.util.hasChild
 import dev.karmakrafts.iridium.util.renderFirTree
 import org.jetbrains.kotlin.fir.FirElement
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * A matcher for FIR (Frontend IR) elements that provides a DSL for asserting properties of FIR elements.
@@ -75,6 +77,9 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @param block The lambda containing assertions to apply to the element
      */
     inline fun <reified T : FirElement> T.matches(name: String, block: FirElementMatcher<T>.() -> Unit) {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
         try {
             FirElementMatcher(name, this, depth + 1).block()
         } catch (error: Throwable) {
@@ -90,8 +95,12 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @param T The type of FIR element to match
      * @param block The lambda containing assertions to apply to the element
      */
-    inline infix fun <reified T : FirElement> T.matches(block: FirElementMatcher<T>.() -> Unit) =
+    inline infix fun <reified T : FirElement> T.matches(block: FirElementMatcher<T>.() -> Unit) {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
         matches("$scopeName-$depth", block)
+    }
 
     /**
      * Asserts that the current FIR element contains a child of the specified type that matches the given predicate.

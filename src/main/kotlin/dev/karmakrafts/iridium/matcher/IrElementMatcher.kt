@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.ClassId
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * A matcher for IR elements that provides a DSL for asserting properties of IR elements in compiler tests.
@@ -101,6 +103,9 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
      * @param block The lambda containing assertions to apply to the element
      */
     inline fun <reified T : IrElement> T.matches(name: String, block: IrElementMatcher<T>.() -> Unit) {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
         val newDepth = depth + 1
         try {
             IrElementMatcher(name, this, pluginContext, newDepth).block()
@@ -117,8 +122,12 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
      * @param T The type of IR element to match
      * @param block The lambda containing assertions to apply to the element
      */
-    inline infix fun <reified T : IrElement> T.matches(block: IrElementMatcher<T>.() -> Unit) =
+    inline infix fun <reified T : IrElement> T.matches(block: IrElementMatcher<T>.() -> Unit) {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
         matches("$scopeName-$depth", block)
+    }
 
     /**
      * Creates a type matcher for the receiver IR type.
@@ -129,6 +138,9 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
      * @param block The lambda containing assertions to apply to the type
      */
     inline infix fun <reified T : IrType> T.matches(block: IrTypeMatcher<T>.() -> Unit) {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
         IrTypeMatcher( // @formatter:off
             scopeName = scopeName,
             depth = depth,
@@ -181,6 +193,9 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
  * @param typeMatcher The lambda containing assertions to apply to the return type
  */
 inline fun IrElementMatcher<out IrFunction>.returns(typeMatcher: IrTypeMatcher<IrType>.() -> Unit) {
+    contract {
+        callsInPlace(typeMatcher, InvocationKind.EXACTLY_ONCE)
+    }
     IrTypeMatcher( // @formatter:off
         scopeName = scopeName,
         depth = depth,
@@ -201,6 +216,9 @@ inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
     name: String,
     typeMatcher: IrTypeMatcher<IrType>.() -> Unit
 ) { // @formatter:on
+    contract {
+        callsInPlace(typeMatcher, InvocationKind.EXACTLY_ONCE)
+    }
     val type = element.parameters.find { it.kind == IrParameterKind.Regular && it.name.asString() == name }!!.type
     IrTypeMatcher( // @formatter:off
         scopeName = scopeName,
@@ -222,6 +240,9 @@ inline fun IrElementMatcher<out IrFunction>.hasValueParameter( // @formatter:off
     index: Int,
     typeMatcher: IrTypeMatcher<IrType>.() -> Unit
 ) { // @formatter:on
+    contract {
+        callsInPlace(typeMatcher, InvocationKind.EXACTLY_ONCE)
+    }
     val type = element.parameters.filter { it.kind == IrParameterKind.Regular }[index].type
     IrTypeMatcher( // @formatter:off
         scopeName = scopeName,
