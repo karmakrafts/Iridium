@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
+import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
@@ -65,6 +66,8 @@ class IrElementMatcher<ELEMENT : IrElement> @PublishedApi internal constructor( 
     override val pluginContext: IrPluginContext,
     @PublishedApi internal val depth: Int = 0
 ) : IrTypeAwareMatcher() { // @formatter:on
+    override val sourceFile: IrFile? by lazy { element.sourceFile() }
+
     override val assertionContext: String by lazy {
         "Assertion failed in $scopeName (${element::class.java.simpleName}/$depth)\n${element.renderIrTree()}"
     }

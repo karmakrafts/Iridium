@@ -21,6 +21,7 @@ import dev.karmakrafts.iridium.util.renderIrTree
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrType
@@ -56,6 +57,8 @@ class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @forma
     private val parentElement: IrElement,
     override val pluginContext: IrPluginContext
 ) : IrTypeAwareMatcher() { // @formatter:on
+    override val sourceFile: IrFile? by lazy { parentElement.sourceFile() }
+
     override val assertionContext: String by lazy {
         "Assertion failed in $scopeName (${type::class.java.simpleName}/$depth)\n${
             type.render()

@@ -36,8 +36,12 @@ import org.junit.jupiter.api.Test
 class CompilerSmokeTest {
     @Language("kotlin")
     private val defaultProgram: String = """
+        class Box
         @Suppress("UNCHECKED_CAST")
         fun <T> test(value: T): T = value
+        fun makeBox(): Box = Box()
+        fun maybeString(): String? = null
+        fun takeUInt(value: UInt): ULong = 0uL
         fun main(args: Array<String>) {
             println("Hello, World")
         }
@@ -61,6 +65,16 @@ class CompilerSmokeTest {
                 hasTypeParameter("T")
                 returns { typeParameter("T") }
                 hasValueParameter("value") { typeParameter("T") }
+            }
+            getChild<IrFunction> { it.name.asString() == "makeBox" }.matches("makeBox") {
+                returns { type(type("Box")) }
+            }
+            getChild<IrFunction> { it.name.asString() == "maybeString" }.matches("maybeString") {
+                returns { strictType(types.stringType.nullable()) }
+            }
+            getChild<IrFunction> { it.name.asString() == "takeUInt" }.matches("takeUInt") {
+                returns { uLong() }
+                hasValueParameter("value") { uInt() }
             }
             containsChild<IrCall> { it.target.name.asString() == "println" }
         }

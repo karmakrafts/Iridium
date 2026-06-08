@@ -19,21 +19,18 @@ package dev.karmakrafts.iridium.pipeline
 import dev.karmakrafts.iridium.util.DelegatingDiagnosticsReporter
 import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.cli.CliDiagnostics
 import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
+import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.convertToIrAndActualizeForJvm
 import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.createProjectEnvironment
 import org.jetbrains.kotlin.com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
-import org.jetbrains.kotlin.com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -52,7 +49,6 @@ import org.jetbrains.kotlin.fir.pipeline.SingleModuleFrontendOutput
 import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory.Context
-import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
 import org.jetbrains.kotlin.name.Name
@@ -104,19 +100,18 @@ class CompilerPipeline internal constructor(
         initializeDiagnosticFactoriesStorage()
     }
 
-    private val environment: KotlinCoreEnvironment = createEnvironment()
-    private inline val project: Project get() = environment.project
-    private val projectEnvironment: AbstractProjectEnvironment = createProjectEnvironment()
+    private val projectEnvironment: VfsBasedProjectEnvironment = createProjectEnvironment()
+    private inline val project: Project get() = projectEnvironment.project
 
-    private val globalSearchScope: GlobalSearchScope = GlobalSearchScope.allScope(project)
-    private val fileSearchScope: PsiBasedProjectFileSearchScope = PsiBasedProjectFileSearchScope(globalSearchScope)
+    private val librariesScope = projectEnvironment.getSearchScopeForProjectLibraries()
+    private val javaSourcesScope = projectEnvironment.getSearchScopeForProjectJavaSources()
 
     private val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
 
     private val context: Context = Context(
         configuration = compilerConfiguration,
         projectEnvironment = projectEnvironment,
-        librariesScope = fileSearchScope,
+        librariesScope = librariesScope,
         registerJvmDeserializationExtension = false
     )
 
@@ -143,7 +138,7 @@ class CompilerPipeline internal constructor(
 
     private val sourceSession: FirSession = FirJvmSessionFactory.createSourceSession(
         moduleData = sourceModuleData,
-        javaSourcesScope = fileSearchScope,
+        javaSourcesScope = javaSourcesScope,
         createIncrementalCompilationSymbolProviders = { null },
         extensionRegistrars = firExtensions,
         configuration = compilerConfiguration,
@@ -160,18 +155,11 @@ class CompilerPipeline internal constructor(
         }
     }
 
-    private fun createProjectEnvironment(): AbstractProjectEnvironment = createProjectEnvironment(
+    private fun createProjectEnvironment(): VfsBasedProjectEnvironment = createProjectEnvironment(
         configuration = compilerConfiguration,
         parentDisposable = disposable,
         configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES
     )
-
-    @OptIn(K1Deprecation::class) // TODO: migrate to K2 alternative
-    private fun createEnvironment(): KotlinCoreEnvironment = KotlinCoreEnvironment.createForProduction( // @formatter:off
-        configuration = compilerConfiguration,
-        projectDisposable = disposable,
-        configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES
-    ) // @formatter:on
 
     private fun createModuleData( // @formatter:off
         name: String,
