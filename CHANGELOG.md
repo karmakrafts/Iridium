@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.13.0]
+
 ### Added
 
 - `CompilerPipelineBuilder.extraLibrary` for specifying extra KLIBs for the created pipeline
