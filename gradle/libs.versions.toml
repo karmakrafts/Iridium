@@ -2,7 +2,7 @@
 
 java = "17"
 
-iridium = "1.12.0"
+iridium = "1.13.0"
 kotlin = "2.4.0" # https://github.com/JetBrains/kotlin/releases
 dokka = "2.2.0" # https://github.com/Kotlin/dokka/releases
 karmaConventions = "1.17.0" # https://github.com/karmakrafts/karma-conventions/tags

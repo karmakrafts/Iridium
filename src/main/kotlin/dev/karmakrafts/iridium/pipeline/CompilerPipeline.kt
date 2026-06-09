@@ -16,8 +16,10 @@
 
 package dev.karmakrafts.iridium.pipeline
 
+import dev.karmakrafts.iridium.util.CompilerHostInfo
 import dev.karmakrafts.iridium.util.DelegatingDiagnosticsReporter
 import dev.karmakrafts.iridium.util.RecordingMessageCollector
+import dev.karmakrafts.iridium.util.formatString
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
@@ -60,6 +62,7 @@ import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory.Context
 import org.jetbrains.kotlin.fir.session.FirNativeSessionFactory
 import org.jetbrains.kotlin.fir.session.FirWasmSessionFactory
+import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
@@ -74,8 +77,14 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
-import oshi.util.PlatformEnum
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.walk
 
 /**
  * A compiler pipeline that handles the compilation of Kotlin source code.
@@ -96,6 +105,11 @@ class CompilerPipeline internal constructor(
      * The platform to compile the Kotlin code for.
      */
     val compilerTarget: CompilerTarget = CompilerTarget.JVM,
+
+    /**
+     * Extra JARs or KLIBs to be loaded for the specified compiler platform.
+     */
+    val extraLibraries: List<Path> = emptyList(),
 
     /**
      * The language version settings to use for compilation.
@@ -128,9 +142,9 @@ class CompilerPipeline internal constructor(
     private val projectEnvironment: VfsBasedProjectEnvironment = createProjectEnvironment()
     private inline val project: Project get() = projectEnvironment.project
 
-    private val librariesScope = projectEnvironment.getSearchScopeForProjectLibraries()
-    private val javaSourcesScope = projectEnvironment.getSearchScopeForProjectJavaSources()
-
+    private val librariesScope: AbstractProjectFileSearchScope = projectEnvironment.getSearchScopeForProjectLibraries()
+    private val javaSourcesScope: AbstractProjectFileSearchScope =
+        projectEnvironment.getSearchScopeForProjectJavaSources()
     private val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
 
     private val jvmContext: Context by lazy {
@@ -143,9 +157,7 @@ class CompilerPipeline internal constructor(
     }
 
     private val sharedLibSession: FirSession = createSharedLibrarySession()
-
     private val resolvedKlibLibraries: List<KotlinLibrary> by lazy { resolveKlibLibraries() }
-
     private val libModuleData: FirModuleData = createModuleData("${compilerConfiguration.moduleName!!}-lib")
 
     @Suppress("UNUSED") // This needs to be created and held for the lifetime of the pipeline
@@ -251,14 +263,21 @@ class CompilerPipeline internal constructor(
 
     private fun resolveKlibLibraries(): List<KotlinLibrary> {
         if (compilerTarget == CompilerTarget.JVM) return emptyList()
-        val paths = (compilerConfiguration.libraries + resolveKlibLibraryPaths()).distinct()
+        // @formatter:off
+        val paths = (compilerConfiguration.libraries
+            + resolveKlibLibraryPaths()
+            + extraLibraries.map(Path::absolutePathString))
+            .distinct()
+        // @formatter:on
         if (paths.isEmpty()) return emptyList()
-        return KlibLoader { libraryPaths(paths) }.load().librariesStdlibFirst
+        val result = KlibLoader { libraryPaths(paths) }.load()
+        for (lib in result.problematicLibraries) println(lib.formatString())
+        return result.librariesStdlibFirst
     }
 
     private fun resolveKlibLibraryPaths(): List<String> = when (compilerTarget) { // @formatter:off
         CompilerTarget.JVM -> emptyList()
-        CompilerTarget.NATIVE -> listOfNotNull(resolveNativeStdlibPath())
+        CompilerTarget.NATIVE -> listOfNotNull(resolveNativeStdlibPath()) + resolveNativePlatformLibraryPaths()
         CompilerTarget.JS -> listOfNotNull(
             resolveGradleKlibPath("kotlin-stdlib-js", "kotlin-stdlib-js-${KotlinCompilerVersion.VERSION}.klib")
         )
@@ -268,29 +287,28 @@ class CompilerPipeline internal constructor(
     } // @formatter:on
 
     private fun resolveNativeStdlibPath(): String? {
-        val version = KotlinCompilerVersion.VERSION
-        val home = System.getProperty("user.home") ?: return null
-        val osPrefix = when (PlatformEnum.getCurrentPlatform()) {
-            PlatformEnum.WINDOWS -> "mingw"
-            PlatformEnum.MACOS -> "macos"
-            else -> "linux"
-        }
-        val archSuffix = when (System.getProperty("os.arch")) {
-            "aarch64", "arm64" -> "aarch64"
-            else -> "x86_64"
-        }
-        return File(
-            home, ".konan/kotlin-native-prebuilt-$osPrefix-$archSuffix-$version/klib/common/stdlib"
-        ).takeIf(File::exists)?.absolutePath
+        val stdlibDir = CompilerHostInfo.konanPrebuiltDir.resolve("klib/common/stdlib")
+        if (!stdlibDir.exists()) return null
+        return stdlibDir.absolutePathString()
+    }
+
+    private fun resolveNativePlatformLibraryPaths(): List<String> {
+        val platformTarget = "${CompilerHostInfo.osPrefix}_${CompilerHostInfo.shortArchSuffix}"
+        val platformDir = CompilerHostInfo.konanPrebuiltDir.resolve("klib/platform/$platformTarget")
+        if (!platformDir.exists()) return emptyList()
+        // @formatter:off
+        return platformDir.listDirectoryEntries()
+            .filter { it.isDirectory() }
+            .map { it.absolutePathString() }
+            .sorted()
+            .toList()
+        // @formatter:on
     }
 
     private fun resolveGradleKlibPath(moduleName: String, fileName: String): String? {
-        val gradleHome =
-            System.getenv("GRADLE_USER_HOME")?.let(::File) ?: File(System.getProperty("user.home"), ".gradle")
-        val moduleDir = File(
-            gradleHome, "caches/modules-2/files-2.1/org.jetbrains.kotlin/$moduleName/${KotlinCompilerVersion.VERSION}"
-        )
-        return moduleDir.walkTopDown().firstOrNull { it.isFile && it.name == fileName }?.absolutePath
+        val moduleDir =
+            CompilerHostInfo.gradleHome.resolve("caches/modules-2/files-2.1/org.jetbrains.kotlin/$moduleName/${KotlinCompilerVersion.VERSION}")
+        return moduleDir.walk().firstOrNull { it.isRegularFile() && it.name == fileName }?.absolutePathString()
     }
 
     private fun setupJvmIrLinker(module: IrModuleFragment, symbolTable: SymbolTable, irBuiltIns: IrBuiltIns) {

@@ -32,8 +32,11 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import java.io.File
+import java.nio.file.Path
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.io.path.extension
+import kotlin.io.path.walk
 import kotlin.reflect.KFunction
 
 /**
@@ -63,6 +66,9 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
 
     @PublishedApi
     internal val compilerConfig: CompilerConfiguration = CompilerConfiguration.create()
+
+    @PublishedApi
+    internal val extraLibraries: ArrayList<Path> = ArrayList()
 
     /**
      * The language version settings to use for compilation.
@@ -129,6 +135,38 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
     }
 
     /**
+     * Add an extra KLIB library for supported targets at the specified path.
+     *
+     * @param path The path at which to find the KLIB to be added to the compilation unit.
+     */
+    fun extraLibrary(path: Path) {
+        extraLibraries.add(path)
+    }
+
+    /**
+     * Add an extra KLIB library for supported targets at the specified path.
+     *
+     * @param path The path at which to find the KLIB to be added to the compilation unit.
+     */
+    fun extraLibrary(path: String) = extraLibrary(Path.of(path))
+
+    /**
+     * Add extra KLIB libraries for supported targets at the specified path.
+     *
+     * @param directory The path at which to find the KLIB files to be added to the compilation unit.
+     */
+    fun extraLibraries(directory: Path) {
+        extraLibraries.addAll(directory.walk().filter { file -> file.extension == "klib" })
+    }
+
+    /**
+     * Add extra KLIB libraries for supported targets at the specified path.
+     *
+     * @param directory The path at which to find the KLIB files to be added to the compilation unit.
+     */
+    fun extraLibraries(directory: String) = extraLibraries(Path.of(directory))
+
+    /**
      * Builds a [CompilerPipeline] instance with the current configuration.
      *
      * @return A new [CompilerPipeline] instance
@@ -142,7 +180,8 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
             languageVersionSettings = languageVersionSettings,
             firExtensions = firExtensionRegistrars.map { it(messageCollector) },
             irExtensions = irExtensions,
-            compilerConfiguration = compilerConfig
+            compilerConfiguration = compilerConfig,
+            extraLibraries = extraLibraries
         )
     }
 }

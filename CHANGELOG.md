@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+### Added
+
+- `CompilerPipelineBuilder.extraLibrary` for specifying extra KLIBs for the created pipeline
+- `CompilerPipelineBuilder.extraLibraries` for specifying extra KLIBs for the created pipeline
+
+### Changed
+
+- Fixed resolution of builtin platform libraries (`kotlin.js`, `kotlinx.cinterop` etc.) for Kotlin Native, JS and WASM
+
 ## [1.12.0]
 
 ### Added

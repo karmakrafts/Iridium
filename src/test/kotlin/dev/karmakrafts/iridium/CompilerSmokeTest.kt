@@ -179,4 +179,76 @@ class CompilerSmokeTest {
             containsChild<IrFunctionReference> { it.reflectionTarget!!.owner.name.asString() == "join" }
         }
     }
+
+    @Test
+    fun `Compile simple Kotlin program with Native APIs`() = runCompilerTest {
+        pipeline {
+            defaultPipelineSpec()
+            compilerTarget = CompilerTarget.NATIVE
+        }
+        source(
+            $$"""
+            import platform.builtin.builtin_bswap32
+            import kotlinx.cinterop.ExperimentalForeignApi
+            import kotlinx.cinterop.COpaquePointer
+            @ExperimentalForeignApi
+            val myAddress: COpaquePointer? = null
+            fun main() {
+                val x = builtin_bswap32(0x10203040)
+                println("Byte swapped value: \${x.toHexString()}")
+            }
+        """.trimIndent()
+        )
+        compiler shouldNotReport { error() }
+    }
+
+    @Test
+    fun `Compile simple Kotlin program with JS APIs`() = runCompilerTest {
+        pipeline {
+            defaultPipelineSpec()
+            compilerTarget = CompilerTarget.JS
+        }
+        source(
+            """
+            import kotlin.js.JsAny
+            import kotlin.js.js
+            private external interface MyBinding : JsAny {
+                var value: String
+                fun compute(): String
+            }
+            private fun getMyBinding(): MyBinding = js("__mybinding__")
+            suspend fun main() {
+                val binding = getMyBinding()
+                binding.value = "HELLO, WORLD!"
+                println(binding.compute())
+            }
+        """.trimIndent()
+        )
+        compiler shouldNotReport { error() }
+    }
+
+    @Test
+    fun `Compile simple Kotlin program with WASM APIs`() = runCompilerTest {
+        pipeline {
+            defaultPipelineSpec()
+            compilerTarget = CompilerTarget.WASM
+        }
+        source(
+            """
+            import kotlin.js.JsAny
+            import kotlin.js.js
+            private external interface MyBinding : JsAny {
+                var value: String
+                fun compute(): String
+            }
+            private fun getMyBinding(): MyBinding = js("__mybinding__")
+            suspend fun main() {
+                val binding = getMyBinding()
+                binding.value = "HELLO, WORLD!"
+                println(binding.compute())
+            }
+        """.trimIndent()
+        )
+        compiler shouldNotReport { error() }
+    }
 }
