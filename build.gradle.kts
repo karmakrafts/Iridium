@@ -16,7 +16,6 @@
 
 import dev.karmakrafts.conventions.GitLabCI
 import dev.karmakrafts.conventions.apache2License
-import dev.karmakrafts.conventions.authenticatedSonatype
 import dev.karmakrafts.conventions.configureJava
 import dev.karmakrafts.conventions.defaultDependencyLocking
 import dev.karmakrafts.conventions.dokka.configureDokka
@@ -32,7 +31,6 @@ plugins {
     `maven-publish`
     alias(libs.plugins.dokka)
     alias(libs.plugins.karmaConventions)
-    alias(libs.plugins.gradleNexus)
 }
 
 group = "dev.karmakrafts.iridium"
@@ -87,8 +85,4 @@ publishing {
     with(GitLabCI) {
         karmaKraftsDefaults()
     }
-}
-
-nexusPublishing {
-    authenticatedSonatype()
 }

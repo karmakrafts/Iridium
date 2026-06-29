@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+### Changed
+
+- Updated to Gradle 9.6.0
+- Updated to Karma Conventions 1.18.1
+- Updated to OSHI 7.3.2
+- Migrated to NMCP based Maven Central publishing
+
 ## [1.13.0]
 
 ### Added
