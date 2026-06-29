@@ -2,14 +2,13 @@
 
 java = "17"
 
-iridium = "1.13.0"
+iridium = "1.13.1"
 kotlin = "2.4.0" # https://github.com/JetBrains/kotlin/releases
 dokka = "2.2.0" # https://github.com/Kotlin/dokka/releases
-karmaConventions = "1.17.0" # https://github.com/karmakrafts/karma-conventions/tags
-gradleNexus = "2.0.0" # https://github.com/gradle-nexus/publish-plugin/releases
+karmaConventions = "1.18.1" # https://github.com/karmakrafts/karma-conventions/tags
 junit = "5.14.4" # https://github.com/junit-team/junit5/releases
 annotations = "26.1.0" # https://github.com/JetBrains/java-annotations/releases
-oshi = "7.3.0" # https://github.com/oshi/oshi/releases
+oshi = "7.3.2" # https://github.com/oshi/oshi/releases
 
 [libraries]
 
@@ -26,4 +25,3 @@ oshi-core = { module = "com.github.oshi:oshi-core", version.ref = "oshi" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 karmaConventions = { id = "dev.karmakrafts.conventions.karma-conventions", version.ref = "karmaConventions" }
-gradleNexus = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "gradleNexus" }
