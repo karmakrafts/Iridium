@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.14.0]
+
 ### Added
 
 - Improved KLIB resolver which can automatically download any required libraries if not present
