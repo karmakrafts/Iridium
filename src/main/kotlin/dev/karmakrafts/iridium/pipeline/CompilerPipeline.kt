@@ -81,10 +81,7 @@ import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.walk
 
 /**
  * A compiler pipeline that handles the compilation of Kotlin source code.
@@ -305,11 +302,8 @@ class CompilerPipeline internal constructor(
         // @formatter:on
     }
 
-    private fun resolveGradleKlibPath(moduleName: String, fileName: String): String? {
-        val moduleDir =
-            CompilerHostInfo.gradleHome.resolve("caches/modules-2/files-2.1/org.jetbrains.kotlin/$moduleName/${KotlinCompilerVersion.VERSION}")
-        return moduleDir.walk().firstOrNull { it.isRegularFile() && it.name == fileName }?.absolutePathString()
-    }
+    private fun resolveGradleKlibPath(moduleName: String, fileName: String): String =
+        CompilerHostInfo.resolveGradleKlib(moduleName, fileName).absolutePathString()
 
     private fun setupJvmIrLinker(module: IrModuleFragment, symbolTable: SymbolTable, irBuiltIns: IrBuiltIns) {
         val descriptorMangler = JvmDescriptorMangler(null)

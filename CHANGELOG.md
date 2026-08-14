@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Added
+
+- Improved KLIB resolver which can automatically download any required libraries if not present
+
 ### Changed
 
 - Updated to Gradle 9.7.0
