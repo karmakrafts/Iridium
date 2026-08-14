@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+### Changed
+
+- Updated to Gradle 9.7.0
+- Updated to Kotlin 2.4.10
+- Updated Karma Conventions to 1.20.0
+- Updated OSHI to 7.4.4
+
 ## [1.13.2]
 
 ### Changed

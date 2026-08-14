@@ -19,6 +19,7 @@ import dev.karmakrafts.conventions.apache2License
 import dev.karmakrafts.conventions.configureJava
 import dev.karmakrafts.conventions.defaultDependencyLocking
 import dev.karmakrafts.conventions.dokka.configureDokka
+import dev.karmakrafts.conventions.dokka.withKotlin
 import dev.karmakrafts.conventions.kotlin.defaultCompilerOptions
 import dev.karmakrafts.conventions.setProjectInfo
 import dev.karmakrafts.conventions.setRepository
@@ -35,7 +36,7 @@ plugins {
 
 group = "dev.karmakrafts.iridium"
 version = GitLabCI.getDefaultVersion(libs.versions.iridium)
-configureJava(rootProject.libs.versions.java)
+configureJava(libs.versions.java)
 if (GitLabCI.isCI) defaultDependencyLocking()
 
 configureDokka {
