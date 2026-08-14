@@ -14,6 +14,7 @@ It allows testing compiler behaviour and FIR/IR compiler plugins.
 It currently has the following main features:
 
 * Support for Kotlin/JVM, Kotlin/Native, Kotlin/JS and Kotlin/WASM
+* Automatically downloads dependencies for non-JVM Kotlin tests
 * Idiomatic DSL for specifying compiler pipelines in tests
 * Assertion matchers for compiler reports with DSL
 * Assertion matchers for Kotlin IR with DSL
