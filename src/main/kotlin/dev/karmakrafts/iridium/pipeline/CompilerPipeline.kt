@@ -22,16 +22,15 @@ import dev.karmakrafts.iridium.util.RecordingMessageCollector
 import dev.karmakrafts.iridium.util.formatString
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
-import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
-import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerIr
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.cli.CliDiagnostics
 import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.convertToIrAndActualizeForJvm
-import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.createProjectEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.psiJavaInterop
+import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFir2IrPipelinePhase.convertToIrAndActualizeForJvm
+import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase.createProjectEnvironment
 import org.jetbrains.kotlin.com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
@@ -39,6 +38,8 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.config.MessageCollectorAccess
+import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.config.moduleName
 import org.jetbrains.kotlin.diagnostics.KtRegisteredDiagnosticFactoriesStorage
@@ -62,21 +63,16 @@ import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory.Context
 import org.jetbrains.kotlin.fir.session.FirNativeSessionFactory
 import org.jetbrains.kotlin.fir.session.FirWasmSessionFactory
-import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
-import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.fir.session.KmpModuleKind
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
-import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
-import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
-import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
-import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.js.config.libraries
+import org.jetbrains.kotlin.jvm.environment.JvmClasspath
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.loader.KlibLoader
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
@@ -127,28 +123,28 @@ class CompilerPipeline internal constructor(
 ) : AutoCloseable {
     private val disposable: Disposable = Disposer.newDisposable()
 
+    @OptIn(MessageCollectorAccess::class)
     inline val messageCollector: RecordingMessageCollector
         get() = compilerConfiguration.messageCollector as RecordingMessageCollector
 
     val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
 
     init {
+        compilerConfiguration.languageVersionSettings = languageVersionSettings
         initializeDiagnosticFactoriesStorage()
     }
 
     private val projectEnvironment: VfsBasedProjectEnvironment = createProjectEnvironment()
     private inline val project: Project get() = projectEnvironment.project
 
-    private val librariesScope: AbstractProjectFileSearchScope = projectEnvironment.getSearchScopeForProjectLibraries()
-    private val javaSourcesScope: AbstractProjectFileSearchScope =
-        projectEnvironment.getSearchScopeForProjectJavaSources()
     private val psiFactory: KtPsiFactory = KtPsiFactory(project, false)
 
     private val jvmContext: Context by lazy {
         Context(
             configuration = compilerConfiguration,
             projectEnvironment = projectEnvironment,
-            librariesScope = librariesScope,
+            librariesClasspath = JvmClasspath.ProjectLibraries(),
+            javaInterop = projectEnvironment.psiJavaInterop(),
             registerJvmDeserializationExtension = false
         )
     }
@@ -226,20 +222,18 @@ class CompilerPipeline internal constructor(
         moduleData = sourceModuleData,
         extensionRegistrars = firExtensions,
         configuration = compilerConfiguration,
-        isForLeafHmppModule = false,
+        kmpModuleKind = KmpModuleKind.SingleModule,
         init = {})
 
     private fun createSourceSession(): FirSession = when (compilerTarget) {
         CompilerTarget.JVM -> FirJvmSessionFactory.createSourceSession(
             moduleData = sourceModuleData,
-            javaSourcesScope = javaSourcesScope,
             createIncrementalCompilationSymbolProviders = { null },
             extensionRegistrars = firExtensions,
             configuration = compilerConfiguration,
             context = jvmContext,
-            needRegisterJavaElementFinder = false,
             init = {},
-            isForLeafHmppModule = false
+            kmpModuleKind = KmpModuleKind.SingleModule
         )
 
         CompilerTarget.NATIVE -> FirNativeSessionFactory.createDefaultSourceSession()
@@ -305,31 +299,9 @@ class CompilerPipeline internal constructor(
     private fun resolveGradleKlibPath(moduleName: String, fileName: String): String =
         CompilerHostInfo.resolveGradleKlib(moduleName, fileName).absolutePathString()
 
-    private fun setupJvmIrLinker(module: IrModuleFragment, symbolTable: SymbolTable, irBuiltIns: IrBuiltIns) {
-        val descriptorMangler = JvmDescriptorMangler(null)
-        val linker = JvmIrLinker(
-            currentModule = module.descriptor,
-            messageCollector = messageCollector,
-            typeSystem = JvmIrTypeSystemContext(irBuiltIns),
-            symbolTable = symbolTable,
-            stubGenerator = DeclarationStubGeneratorImpl(
-                moduleDescriptor = module.descriptor,
-                symbolTable = symbolTable,
-                irBuiltins = irBuiltIns,
-                descriptorFinder = DescriptorByIdSignatureFinderImpl( // @formatter:off
-                    moduleDescriptor = module.descriptor,
-                    mangler = descriptorMangler
-                ) // @formatter:on
-            ),
-            manglerDesc = descriptorMangler
-        )
-        linker.init(module)
-        linker.postProcess(true)
-    }
-
     private fun convertFirToJvmIr(allModulesOutput: AllModulesFrontendOutput) =
         allModulesOutput.convertToIrAndActualizeForJvm(
-            fir2IrExtensions = JvmFir2IrExtensions(compilerConfiguration),
+            fir2IrExtensions = JvmFir2IrExtensions(),
             configuration = compilerConfiguration,
             diagnosticsReporter = diagnosticsCollector,
             irGeneratorExtensions = irExtensions
@@ -346,7 +318,7 @@ class CompilerPipeline internal constructor(
             visibilityConverter = Fir2IrVisibilityConverter.Default,
             kotlinBuiltIns = DefaultBuiltIns.Instance,
             typeSystemContextProvider = ::IrTypeSystemContextImpl,
-            specialAnnotationsProvider = null,
+            createSpecialAnnotationsProvider = null,
             extraActualDeclarationExtractorsInitializer = { emptyList() })
 
     private fun convertFirToWebIr(allModulesOutput: AllModulesFrontendOutput) =
@@ -360,7 +332,7 @@ class CompilerPipeline internal constructor(
             visibilityConverter = Fir2IrVisibilityConverter.Default,
             kotlinBuiltIns = DefaultBuiltIns.Instance,
             typeSystemContextProvider = ::IrTypeSystemContextImpl,
-            specialAnnotationsProvider = null,
+            createSpecialAnnotationsProvider = null,
             extraActualDeclarationExtractorsInitializer = { emptyList() })
 
     /**
@@ -390,12 +362,11 @@ class CompilerPipeline internal constructor(
 
         val singleModuleOutputs = listOf(SingleModuleFrontendOutput(sourceSession, scopeSession, files))
         val allModulesOutput = AllModulesFrontendOutput(singleModuleOutputs)
-        val (module, _, pluginContext, _, irBuiltIns, symbolTable) = when (compilerTarget) {
+        val (module, _, pluginContext) = when (compilerTarget) {
             CompilerTarget.JVM -> convertFirToJvmIr(allModulesOutput)
             CompilerTarget.NATIVE -> convertFirToNativeIr(allModulesOutput)
             CompilerTarget.JS, CompilerTarget.WASM -> convertFirToWebIr(allModulesOutput)
         }
-        if (compilerTarget == CompilerTarget.JVM) setupJvmIrLinker(module, symbolTable, irBuiltIns)
         return CompileResult(
             source = source,
             firFile = files.first(),

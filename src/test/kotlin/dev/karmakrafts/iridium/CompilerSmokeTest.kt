@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
+import org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.target
 import org.junit.jupiter.api.Test
@@ -176,7 +176,7 @@ class CompilerSmokeTest {
         )
         compiler shouldNotReport { error() }
         result irMatches {
-            containsChild<IrFunctionReference> { it.reflectionTarget!!.owner.name.asString() == "join" }
+            containsChild<IrRichFunctionReference> { it.reflectionTargetSymbol!!.owner.name.asString() == "join" }
         }
     }
 

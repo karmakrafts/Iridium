@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.config.MessageCollectorAccess
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import java.io.File
@@ -172,6 +173,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      * @return A new [CompilerPipeline] instance
      */
     @PublishedApi
+    @OptIn(MessageCollectorAccess::class)
     internal fun build(): CompilerPipeline {
         val messageCollector = RecordingMessageCollector(messageCallback)
         compilerConfig.messageCollector = messageCollector
@@ -200,7 +202,7 @@ typealias CompilerPipelineSpec = CompilerPipelineBuilder.() -> Unit
  * - Enabling FIR
  * - Setting the module name
  * - Disabling incremental compilation
- * - Enabling Java compilation
+ * - Enabling Java API resolution through the JDK
  * - Setting the JDK home
  * - Adding necessary classpath roots
  *
@@ -212,7 +214,6 @@ fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
         put(CommonConfigurationKeys.USE_FIR, true)
         put(CommonConfigurationKeys.MODULE_NAME, moduleName)
         put(CommonConfigurationKeys.INCREMENTAL_COMPILATION, false)
-        put(JVMConfigurationKeys.COMPILE_JAVA, true)
         put(JVMConfigurationKeys.JDK_HOME, File(System.getProperty("java.home")))
         addJvmClasspathRootByType<Function<*>>()    // Pull kotlin-stdlib into classpath
         addJvmClasspathRootByType<KFunction<*>>()   // Pull kotlin-reflect into classpath
