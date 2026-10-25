@@ -1,0 +1,5 @@
+vulnerabilities:
+  - id: CVE-2026-8763
+    statement: Only affects local dev tools
+  - id: CVE-2026-84939
+    statement: Only affects local dev tools
