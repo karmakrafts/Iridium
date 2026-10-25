@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
  *         If truncated, "[...]" is appended to indicate there's more content.
  */
 @TestOnly
-fun FirElement.renderFirTree(maxLines: Int = 5): String {
+public fun FirElement.renderFirTree(maxLines: Int = 5): String {
     val lines = FirRenderer.withResolvePhase().renderElementAsString(this).split("\n").take(maxLines)
     val joinedLines = lines.joinToString("\n")
     return if (lines.size == maxLines) "$joinedLines\n[...]"
@@ -51,7 +51,7 @@ fun FirElement.renderFirTree(maxLines: Int = 5): String {
  * @return The first matching child element, or null if no match is found.
  */
 @TestOnly
-inline infix fun <reified T : FirElement> FirElement.findChild(crossinline predicate: (T) -> Boolean = { true }): T? {
+public inline infix fun <reified T : FirElement> FirElement.findChild(crossinline predicate: (T) -> Boolean = { true }): T? {
     var target: T? = null
     accept(object : FirVisitorVoid() {
         override fun visitElement(element: FirElement) {
@@ -77,7 +77,7 @@ inline infix fun <reified T : FirElement> FirElement.findChild(crossinline predi
  * @throws NullPointerException If no matching child element is found.
  */
 @TestOnly
-inline infix fun <reified T : FirElement> FirElement.getChild(crossinline predicate: (T) -> Boolean = { true }): T =
+public inline infix fun <reified T : FirElement> FirElement.getChild(crossinline predicate: (T) -> Boolean = { true }): T =
     findChild<T>(predicate)!!
 
 /**
@@ -92,5 +92,5 @@ inline infix fun <reified T : FirElement> FirElement.getChild(crossinline predic
  * @return `true` if a matching child element is found, `false` otherwise.
  */
 @TestOnly
-inline infix fun <reified T : FirElement> FirElement.hasChild(crossinline predicate: (T) -> Boolean = { true }): Boolean =
+public inline infix fun <reified T : FirElement> FirElement.hasChild(crossinline predicate: (T) -> Boolean = { true }): Boolean =
     findChild<T>(predicate) != null

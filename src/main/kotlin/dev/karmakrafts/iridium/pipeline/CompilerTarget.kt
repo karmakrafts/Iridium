@@ -27,9 +27,9 @@ import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
  * The target for which to compile Kotlin code during a compiler pipeline invocation.
  * Defines environment config and target platform.
  */
-enum class CompilerTarget( // @formatter:off
-    val environmentConfigFiles: EnvironmentConfigFiles,
-    val targetPlatform: TargetPlatform
+public enum class CompilerTarget( // @formatter:off
+    public val environmentConfigFiles: EnvironmentConfigFiles,
+    public val targetPlatform: TargetPlatform
 ) { // @formatter:on
     // @formatter:off
     JVM   (EnvironmentConfigFiles.JVM_CONFIG_FILES, JvmPlatforms.defaultJvmPlatform),

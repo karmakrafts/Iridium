@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
  * produced during compilation.
  */
 @CompilerAssertionDsl
-class CompileResultAsserter internal constructor() {
+public class CompileResultAsserter internal constructor() {
     @PublishedApi
     internal val assertions: ArrayList<(CompileResult) -> Unit> = ArrayList()
 
@@ -39,7 +39,7 @@ class CompileResultAsserter internal constructor() {
      *
      * @param block A lambda that configures matchers for FIR elements
      */
-    inline infix fun firMatches(block: FirElementMatcher<FirFile>.() -> Unit) {
+    public inline infix fun firMatches(block: FirElementMatcher<FirFile>.() -> Unit) {
         assertions += { result ->
             FirElementMatcher("file", result.firFile).block()
         }
@@ -50,7 +50,7 @@ class CompileResultAsserter internal constructor() {
      *
      * @param block A lambda that configures matchers for IR elements
      */
-    inline infix fun irMatches(block: IrElementMatcher<IrModuleFragment>.() -> Unit) {
+    public inline infix fun irMatches(block: IrElementMatcher<IrModuleFragment>.() -> Unit) {
         assertions += { result ->
             IrElementMatcher("module", result.module, result.pluginContext).block()
         }

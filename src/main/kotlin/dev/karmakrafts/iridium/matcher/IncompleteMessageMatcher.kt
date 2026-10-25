@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
  * a human-readable description of these conditions for use in assertion messages.
  */
 @CompilerAssertionDsl
-class IncompleteMessageMatcher @PublishedApi internal constructor() {
+public class IncompleteMessageMatcher @PublishedApi internal constructor() {
     internal var condition: CompilerMessageFilter = CompilerMessageFilter { true }
     internal val conditions: ArrayList<String> = ArrayList()
 
@@ -38,7 +38,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      * Matches any compiler message regardless of content or properties.
      * This is useful when you want to assert that any message exists.
      */
-    fun anyMessage() {
+    public fun anyMessage() {
         condition += CompilerMessageFilter { true }
         conditions += "match any message"
     }
@@ -48,7 +48,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      *
      * @param message The exact message text to match
      */
-    fun message(message: String) {
+    public fun message(message: String) {
         condition += CompilerMessageFilter { it.message == message }
         conditions += "equal '$message'"
     }
@@ -58,7 +58,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      *
      * @param messageSubstring The substring to look for in the message text
      */
-    fun messageWith(messageSubstring: String) {
+    public fun messageWith(messageSubstring: String) {
         condition += CompilerMessageFilter { messageSubstring in it.message }
         conditions += "contain '$messageSubstring'"
     }
@@ -68,7 +68,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      *
      * @param messageSubstring The substring that should not be present in the message text
      */
-    fun messageWithout(messageSubstring: String) {
+    public fun messageWithout(messageSubstring: String) {
         condition += CompilerMessageFilter { messageSubstring !in it.message }
         conditions += "do not contain '$messageSubstring'"
     }
@@ -78,7 +78,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      *
      * @param severity The compiler message severity to match
      */
-    fun withSeverity(severity: CompilerMessageSeverity) {
+    public fun withSeverity(severity: CompilerMessageSeverity) {
         condition += CompilerMessageFilter { it.severity == severity }
         conditions += "have the severity $severity"
     }
@@ -87,7 +87,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      * Matches compiler messages with INFO severity.
      * These are informational messages that don't indicate problems.
      */
-    fun info() {
+    public fun info() {
         condition += CompilerMessageFilter { it.severity == CompilerMessageSeverity.INFO }
         conditions += "report an information"
     }
@@ -96,7 +96,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      * Matches compiler messages with LOGGING severity.
      * These are verbose logging messages typically used for debugging.
      */
-    fun verbose() {
+    public fun verbose() {
         condition += CompilerMessageFilter { it.severity == CompilerMessageSeverity.LOGGING }
         conditions += "report a verbose information"
     }
@@ -105,7 +105,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      * Matches compiler messages with ERROR severity.
      * These indicate compilation errors that prevent successful compilation.
      */
-    fun error() {
+    public fun error() {
         condition += CompilerMessageFilter { it.severity.isError }
         conditions += "report an error"
     }
@@ -114,7 +114,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      * Matches compiler messages with WARNING severity.
      * These indicate potential problems that don't prevent compilation.
      */
-    fun warning() {
+    public fun warning() {
         condition += CompilerMessageFilter { it.severity.isWarning }
         conditions += "report a warning"
     }
@@ -124,7 +124,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      *
      * @param line The line number to match
      */
-    fun atLine(line: Int) {
+    public fun atLine(line: Int) {
         condition += CompilerMessageFilter { it.location?.line == line }
         conditions += "are at line $line"
     }
@@ -134,7 +134,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      *
      * @param column The column number to match
      */
-    fun inColumn(column: Int) {
+    public fun inColumn(column: Int) {
         condition += CompilerMessageFilter { it.location?.column == column }
         conditions += "are in column $column"
     }
@@ -145,7 +145,7 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      *
      * @param file The file name or path suffix to match
      */
-    fun fromFile(file: String) {
+    public fun fromFile(file: String) {
         condition += CompilerMessageFilter { it.location?.path?.endsWith(file) == true }
         conditions += "are in file $file"
     }
@@ -157,11 +157,11 @@ class IncompleteMessageMatcher @PublishedApi internal constructor() {
      * @param message The compiler message to check
      * @return true if the message matches all conditions, false otherwise
      */
-    operator fun invoke(message: CompilerMessage): Boolean = condition(message)
+    public operator fun invoke(message: CompilerMessage): Boolean = condition(message)
 }
 
 /**
  * A type alias for a function that configures an IncompleteMessageMatcher.
  * This is used in the DSL to provide a concise way to specify message matching criteria.
  */
-typealias IncompleteMessageMatcherSpec = IncompleteMessageMatcher.() -> Unit
+public typealias IncompleteMessageMatcherSpec = IncompleteMessageMatcher.() -> Unit

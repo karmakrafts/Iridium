@@ -34,9 +34,9 @@ import kotlin.contracts.contract
  * @param depth The current depth in the FIR tree, used for generating scope names
  */
 @CompilerAssertionDsl
-class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor( // @formatter:off
-    val scopeName: String,
-    val element: ELEMENT,
+public class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor( // @formatter:off
+    public val scopeName: String,
+    public val element: ELEMENT,
     @PublishedApi internal val depth: Int = 0
 ) : BasicAssertionScope() { // @formatter:on
     override val assertionContext: String by lazy {
@@ -56,7 +56,7 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @return The first child element of type T that satisfies the predicate
      * @throws AssertionError if no matching child is found or if an error occurs during the search
      */
-    inline fun <reified T : FirElement> getChild(crossinline predicate: (T) -> Boolean = { true }): T {
+    public inline fun <reified T : FirElement> getChild(crossinline predicate: (T) -> Boolean = { true }): T {
         return try {
             element.getChild(predicate)
         } catch (error: Throwable) {
@@ -76,7 +76,7 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @param name The name of the scope for error reporting
      * @param block The lambda containing assertions to apply to the element
      */
-    inline fun <reified T : FirElement> T.matches(name: String, block: FirElementMatcher<T>.() -> Unit) {
+    public inline fun <reified T : FirElement> T.matches(name: String, block: FirElementMatcher<T>.() -> Unit) {
         contract {
             callsInPlace(block, InvocationKind.EXACTLY_ONCE)
         }
@@ -95,7 +95,7 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @param T The type of FIR element to match
      * @param block The lambda containing assertions to apply to the element
      */
-    inline infix fun <reified T : FirElement> T.matches(block: FirElementMatcher<T>.() -> Unit) {
+    public inline infix fun <reified T : FirElement> T.matches(block: FirElementMatcher<T>.() -> Unit) {
         contract {
             callsInPlace(block, InvocationKind.EXACTLY_ONCE)
         }
@@ -110,7 +110,7 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @param predicate A function that takes a FIR element of type T and returns a boolean indicating if it matches the criteria
      * @throws AssertionError if no matching child is found
      */
-    inline fun <reified T : FirElement> containsChild(crossinline predicate: (T) -> Boolean = { true }) {
+    public inline fun <reified T : FirElement> containsChild(crossinline predicate: (T) -> Boolean = { true }) {
         val result = try {
             element.hasChild<T>(predicate)
         } catch (error: Throwable) {
@@ -127,7 +127,7 @@ class FirElementMatcher<ELEMENT : FirElement> @PublishedApi internal constructor
      * @param predicate A function that takes a FIR element of type T and returns a boolean indicating if it matches the criteria
      * @throws AssertionError if a matching child is found
      */
-    inline fun <reified T : FirElement> containsNoChild(crossinline predicate: (T) -> Boolean = { true }) {
+    public inline fun <reified T : FirElement> containsNoChild(crossinline predicate: (T) -> Boolean = { true }) {
         val result = try {
             !element.hasChild<T>(predicate)
         } catch (error: Throwable) {

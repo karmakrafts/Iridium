@@ -30,7 +30,7 @@ import kotlin.contracts.contract
  * which diagnostic messages should or should not be reported during compilation.
  */
 @CompilerAssertionDsl
-class CompilerAsserter internal constructor() {
+public class CompilerAsserter internal constructor() {
     @PublishedApi
     internal val messageMatchers: ArrayList<MessageMatcher> = ArrayList()
 
@@ -40,7 +40,7 @@ class CompilerAsserter internal constructor() {
      * @param spec A specification that configures what kind of message to expect
      * @return A [MessageMatcher] that can be further configured with occurrence expectations
      */
-    inline infix fun shouldReport(spec: IncompleteMessageMatcherSpec): MessageMatcher {
+    public inline infix fun shouldReport(spec: IncompleteMessageMatcherSpec): MessageMatcher {
         contract {
             callsInPlace(spec, InvocationKind.EXACTLY_ONCE)
         }
@@ -58,7 +58,7 @@ class CompilerAsserter internal constructor() {
      *
      * @param spec A specification that configures what kind of message should not appear
      */
-    inline infix fun shouldNotReport(crossinline spec: IncompleteMessageMatcherSpec) {
+    public inline infix fun shouldNotReport(crossinline spec: IncompleteMessageMatcherSpec) {
         contract {
             callsInPlace(spec, InvocationKind.EXACTLY_ONCE)
         }
@@ -71,7 +71,7 @@ class CompilerAsserter internal constructor() {
         }
     }
 
-    fun reset() {
+    public fun reset() {
         messageMatchers.clear()
     }
 }

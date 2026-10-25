@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.name.ClassId
  * - Converting types to array types
  * - Making types nullable or non-null
  */
-abstract class IrTypeAwareMatcher : BasicAssertionScope(), IrPluginAwareMatcher {
+public abstract class IrTypeAwareMatcher : BasicAssertionScope(), IrPluginAwareMatcher {
     protected open val sourceFile: IrFile? get() = null
 
     /**
@@ -51,7 +51,7 @@ abstract class IrTypeAwareMatcher : BasicAssertionScope(), IrPluginAwareMatcher 
      * @param name The fully qualified name of the class (e.g., "kotlin.String")
      * @return The IR simple type representing the specified class
      */
-    fun type(name: String): IrSimpleType = type(ClassId.fromString(name))
+    public fun type(name: String): IrSimpleType = type(ClassId.fromString(name))
 
     /**
      * Creates an IR type from a ClassId.
@@ -59,7 +59,7 @@ abstract class IrTypeAwareMatcher : BasicAssertionScope(), IrPluginAwareMatcher 
      * @param id The ClassId object representing the class
      * @return The IR simple type representing the specified class
      */
-    fun type(id: ClassId): IrSimpleType = findClass(id)!!.starProjectedType
+    public fun type(id: ClassId): IrSimpleType = findClass(id)!!.starProjectedType
 
     /**
      * Creates an IR type from a primitive type.
@@ -67,7 +67,7 @@ abstract class IrTypeAwareMatcher : BasicAssertionScope(), IrPluginAwareMatcher 
      * @param primitive The PrimitiveType to convert to an IR type
      * @return The IR type representing the specified primitive type
      */
-    fun type(primitive: PrimitiveType): IrType = types.primitiveTypeToIrType[primitive]!!
+    public fun type(primitive: PrimitiveType): IrType = types.primitiveTypeToIrType[primitive]!!
 
     /**
      * Creates an IR type from an unsigned type.
@@ -75,28 +75,28 @@ abstract class IrTypeAwareMatcher : BasicAssertionScope(), IrPluginAwareMatcher 
      * @param unsigned The UnsignedType to convert to an IR type
      * @return The IR type representing the specified unsigned type
      */
-    fun type(unsigned: UnsignedType): IrType = findClass(unsigned.classId)!!.defaultType
+    public fun type(unsigned: UnsignedType): IrType = findClass(unsigned.classId)!!.defaultType
 
     /**
      * Converts an IR type to its array type.
      *
      * @return The array type of the receiver type
      */
-    fun IrType.array(): IrType = toArrayOrPrimitiveArrayType(types)
+    public fun IrType.array(): IrType = toArrayOrPrimitiveArrayType(types)
 
     /**
      * Makes an IR type nullable.
      *
      * @return The nullable version of the receiver type
      */
-    fun IrType.nullable(): IrType = makeNullable()
+    public fun IrType.nullable(): IrType = makeNullable()
 
     /**
      * Makes an IR type non-null.
      *
      * @return The non-null version of the receiver type
      */
-    fun IrType.nonNull(): IrType = makeNotNull()
+    public fun IrType.nonNull(): IrType = makeNotNull()
 
     private fun findClass(id: ClassId) =
         sourceFile?.let { pluginContext.finderForSource(it).findClass(id) } ?: pluginContext.finderForBuiltins()

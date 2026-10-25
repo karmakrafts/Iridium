@@ -93,41 +93,41 @@ import kotlin.io.path.listDirectoryEntries
  * The pipeline supports customization through FIR and IR extensions, language version settings,
  * and compiler configuration.
  */
-class CompilerPipeline internal constructor(
+public class CompilerPipeline internal constructor(
     /**
      * The platform to compile the Kotlin code for.
      */
-    val compilerTarget: CompilerTarget = CompilerTarget.JVM,
+    public val compilerTarget: CompilerTarget = CompilerTarget.JVM,
 
     /**
      * Extra JARs or KLIBs to be loaded for the specified compiler platform.
      */
-    val extraLibraries: List<Path> = emptyList(),
+    public val extraLibraries: List<Path> = emptyList(),
 
     /**
      * The language version settings to use for compilation.
      */
-    val languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
+    public val languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
 
     /**
      * The list of FIR extension registrars to use during compilation.
      */
-    val firExtensions: List<FirExtensionRegistrar> = emptyList(),
+    public val firExtensions: List<FirExtensionRegistrar> = emptyList(),
 
     /**
      * The list of IR generation extensions to use during compilation.
      */
-    val irExtensions: List<IrGenerationExtension> = emptyList(),
+    public val irExtensions: List<IrGenerationExtension> = emptyList(),
 
     @PublishedApi internal val compilerConfiguration: CompilerConfiguration = CompilerConfiguration.create(),
 ) : AutoCloseable {
     private val disposable: Disposable = Disposer.newDisposable()
 
     @OptIn(MessageCollectorAccess::class)
-    inline val messageCollector: RecordingMessageCollector
+    public inline val messageCollector: RecordingMessageCollector
         get() = compilerConfiguration.messageCollector as RecordingMessageCollector
 
-    val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
+    public val diagnosticsCollector: BaseDiagnosticsCollector = DelegatingDiagnosticsReporter(messageCollector)
 
     init {
         compilerConfiguration.languageVersionSettings = languageVersionSettings
@@ -349,28 +349,28 @@ class CompilerPipeline internal constructor(
      * @param source The Kotlin source code to compile
      * @return A [CompileResult] containing the compilation artifacts and messages
      */
-    fun run( // @formatter:off
+    public fun run( // @formatter:off
         @Language("kotlin") source: String = "",
         fileName: String = "test.kt"
     ): CompileResult { // @formatter:on
         val input = psiFactory.createPhysicalFile(fileName, source)
-        val (_, scopeSession, files) = buildResolveAndCheckFirFromKtFiles( // @formatter:off
+        val [_, scopeSession, fir] = buildResolveAndCheckFirFromKtFiles( // @formatter:off
             session = sourceSession,
             ktFiles = listOf(input),
             diagnosticsReporter = diagnosticsCollector
         ) // @formatter:on
 
-        val singleModuleOutputs = listOf(SingleModuleFrontendOutput(sourceSession, scopeSession, files))
+        val singleModuleOutputs = listOf(SingleModuleFrontendOutput(sourceSession, scopeSession, fir))
         val allModulesOutput = AllModulesFrontendOutput(singleModuleOutputs)
-        val (module, _, pluginContext) = when (compilerTarget) {
+        val [irModuleFragment, _, pluginContext] = when (compilerTarget) {
             CompilerTarget.JVM -> convertFirToJvmIr(allModulesOutput)
             CompilerTarget.NATIVE -> convertFirToNativeIr(allModulesOutput)
             CompilerTarget.JS, CompilerTarget.WASM -> convertFirToWebIr(allModulesOutput)
         }
         return CompileResult(
             source = source,
-            firFile = files.first(),
-            module = module,
+            firFile = fir.first(),
+            module = irModuleFragment,
             messages = messageCollector.messages.toList(),
             pluginContext = pluginContext
         )

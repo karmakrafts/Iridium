@@ -30,11 +30,11 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
  * Implementations of this interface can use the plugin context to access compiler
  * services and the IR built-ins to work with Kotlin's type system in the IR phase.
  */
-interface IrPluginAwareMatcher {
+public interface IrPluginAwareMatcher {
     /**
      * The IR plugin context that provides access to compiler services and type references.
      */
-    val pluginContext: IrPluginContext
+    public val pluginContext: IrPluginContext
 
     /**
      * Convenient access to IR built-in types.
@@ -42,5 +42,5 @@ interface IrPluginAwareMatcher {
      * This property delegates to [IrPluginContext.irBuiltIns] and provides access to
      * built-in Kotlin types in their IR representation.
      */
-    val types: IrBuiltIns get() = pluginContext.irBuiltIns
+    public val types: IrBuiltIns get() = pluginContext.irBuiltIns
 }

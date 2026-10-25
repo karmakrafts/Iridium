@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
-typealias IrGenerationCallback = (
+public typealias IrGenerationCallback = (
     moduleFragment: IrModuleFragment, pluginContext: IrPluginContext
 ) -> Unit
 

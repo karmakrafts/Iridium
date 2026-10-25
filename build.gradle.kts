@@ -49,6 +49,7 @@ java {
 
 kotlin {
     defaultCompilerOptions()
+    explicitApi()
 }
 
 dependencies {

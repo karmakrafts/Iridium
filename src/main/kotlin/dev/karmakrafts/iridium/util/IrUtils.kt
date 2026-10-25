@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
  *         If truncated, "[...]" is appended to indicate there's more content.
  */
 @TestOnly
-fun IrElement.renderIrTree(maxLines: Int = 5): String {
+public fun IrElement.renderIrTree(maxLines: Int = 5): String {
     val builder = StringBuilder()
     accept(DumpIrTreeVisitor(builder), "")
     val lines = builder.toString().split("\n").take(maxLines)
@@ -54,7 +54,7 @@ fun IrElement.renderIrTree(maxLines: Int = 5): String {
  * @return The first matching child element, or null if no match is found.
  */
 @TestOnly
-inline infix fun <reified T : IrElement> IrElement.findChild(crossinline predicate: (T) -> Boolean): T? {
+public inline infix fun <reified T : IrElement> IrElement.findChild(crossinline predicate: (T) -> Boolean): T? {
     var target: T? = null
     acceptVoid(object : IrVisitorVoid() {
         override fun visitElement(element: IrElement) {
@@ -79,7 +79,7 @@ inline infix fun <reified T : IrElement> IrElement.findChild(crossinline predica
  * @throws NullPointerException If no matching child element is found.
  */
 @TestOnly
-inline infix fun <reified T : IrElement> IrElement.getChild(crossinline predicate: (T) -> Boolean): T =
+public inline infix fun <reified T : IrElement> IrElement.getChild(crossinline predicate: (T) -> Boolean): T =
     findChild<T>(predicate)!!
 
 /**
@@ -93,5 +93,5 @@ inline infix fun <reified T : IrElement> IrElement.getChild(crossinline predicat
  * @return `true` if a matching child element is found, `false` otherwise.
  */
 @TestOnly
-inline infix fun <reified T : IrElement> IrElement.hasChild(crossinline predicate: (T) -> Boolean): Boolean =
+public inline infix fun <reified T : IrElement> IrElement.hasChild(crossinline predicate: (T) -> Boolean): Boolean =
     findChild<T>(predicate) != null

@@ -49,7 +49,7 @@ import kotlin.reflect.KFunction
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class CompilerPipelineDsl
+public annotation class CompilerPipelineDsl
 
 /**
  * Builder class for creating [CompilerPipeline] instances using a DSL-style syntax.
@@ -58,7 +58,7 @@ annotation class CompilerPipelineDsl
  * such as language version settings, compiler configuration, and extensions.
  */
 @CompilerPipelineDsl
-class CompilerPipelineBuilder @PublishedApi internal constructor() {
+public class CompilerPipelineBuilder @PublishedApi internal constructor() {
     private val irExtensions: ArrayList<IrGenerationExtension> = ArrayList()
     private val firExtensionRegistrars: ArrayList<(MessageCollector) -> FirExtensionRegistrar> = ArrayList()
 
@@ -74,19 +74,19 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
     /**
      * The language version settings to use for compilation.
      */
-    var languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT
+    public var languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT
 
     /**
      * The platform to compile the Kotlin code for.
      */
-    var compilerTarget: CompilerTarget = CompilerTarget.JVM
+    public var compilerTarget: CompilerTarget = CompilerTarget.JVM
 
     /**
      * Registers a callback for compiler messages.
      *
      * @param callback The callback to register
      */
-    fun onMessage(callback: CompilerMessageCallback) {
+    public fun onMessage(callback: CompilerMessageCallback) {
         messageCallback += callback
     }
 
@@ -95,7 +95,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      *
      * @param block The configuration block
      */
-    inline fun config(block: CompilerConfiguration.() -> Unit) {
+    public inline fun config(block: CompilerConfiguration.() -> Unit) {
         contract {
             callsInPlace(block, InvocationKind.EXACTLY_ONCE)
         }
@@ -108,7 +108,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      * @param registrar The FIR extension registrar to register
      * @throws IllegalStateException if the registrar is already registered
      */
-    fun firExtensionRegistrar(registrar: (MessageCollector) -> FirExtensionRegistrar) {
+    public fun firExtensionRegistrar(registrar: (MessageCollector) -> FirExtensionRegistrar) {
         check(registrar !in firExtensionRegistrars) { "FIR extension registrar is already added" }
         firExtensionRegistrars += registrar
     }
@@ -119,7 +119,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      * @param extension The IR generation extension to register
      * @throws IllegalStateException if the extension is already registered
      */
-    fun irExtension(extension: IrGenerationExtension) {
+    public fun irExtension(extension: IrGenerationExtension) {
         check(extension !in irExtensions) { "IR extension is already registered" }
         irExtensions += extension
     }
@@ -131,7 +131,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      *
      * @param callback The IR generation callback to register
      */
-    fun irExtension(callback: IrGenerationCallback) {
+    public fun irExtension(callback: IrGenerationCallback) {
         irExtension(DelegatingIrGenerationExtension(callback))
     }
 
@@ -140,7 +140,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      *
      * @param path The path at which to find the KLIB to be added to the compilation unit.
      */
-    fun extraLibrary(path: Path) {
+    public fun extraLibrary(path: Path) {
         extraLibraries.add(path)
     }
 
@@ -149,14 +149,14 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      *
      * @param path The path at which to find the KLIB to be added to the compilation unit.
      */
-    fun extraLibrary(path: String) = extraLibrary(Path.of(path))
+    public fun extraLibrary(path: String): Unit = extraLibrary(Path.of(path))
 
     /**
      * Add extra KLIB libraries for supported targets at the specified path.
      *
      * @param directory The path at which to find the KLIB files to be added to the compilation unit.
      */
-    fun extraLibraries(directory: Path) {
+    public fun extraLibraries(directory: Path) {
         extraLibraries.addAll(directory.walk().filter { file -> file.extension == "klib" })
     }
 
@@ -165,7 +165,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
      *
      * @param directory The path at which to find the KLIB files to be added to the compilation unit.
      */
-    fun extraLibraries(directory: String) = extraLibraries(Path.of(directory))
+    public fun extraLibraries(directory: String): Unit = extraLibraries(Path.of(directory))
 
     /**
      * Builds a [CompilerPipeline] instance with the current configuration.
@@ -193,7 +193,7 @@ class CompilerPipelineBuilder @PublishedApi internal constructor() {
  *
  * This is used as the receiver for the DSL-style configuration of a compiler pipeline.
  */
-typealias CompilerPipelineSpec = CompilerPipelineBuilder.() -> Unit
+public typealias CompilerPipelineSpec = CompilerPipelineBuilder.() -> Unit
 
 /**
  * Applies a default configuration to a [CompilerPipelineBuilder].
@@ -209,7 +209,7 @@ typealias CompilerPipelineSpec = CompilerPipelineBuilder.() -> Unit
  * @param moduleName The name of the module to use in the configuration
  */
 @TestOnly
-fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
+public fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
     config {
         put(CommonConfigurationKeys.USE_FIR, true)
         put(CommonConfigurationKeys.MODULE_NAME, moduleName)
@@ -230,7 +230,7 @@ fun CompilerPipelineBuilder.defaultPipelineSpec(moduleName: String = "test") {
  * @return A configured [CompilerPipeline] instance
  */
 @TestOnly
-inline fun compilerPipeline(block: CompilerPipelineSpec = { defaultPipelineSpec() }): CompilerPipeline {
+public inline fun compilerPipeline(block: CompilerPipelineSpec = { defaultPipelineSpec() }): CompilerPipeline {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }

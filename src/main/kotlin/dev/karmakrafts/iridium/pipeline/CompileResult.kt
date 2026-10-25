@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
  */
 @ConsistentCopyVisibility
 @CompilerPipelineDsl
-data class CompileResult @PublishedApi internal constructor(
+public data class CompileResult @PublishedApi internal constructor(
     /**
      * The original Kotlin source code that was compiled.
      */

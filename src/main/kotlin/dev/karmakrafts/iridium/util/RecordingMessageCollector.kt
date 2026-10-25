@@ -32,13 +32,13 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * @property callback An optional callback that is invoked whenever a message is reported
  */
 @OptIn(ExperimentalAtomicApi::class)
-class RecordingMessageCollector internal constructor(
+public class RecordingMessageCollector internal constructor(
     private val callback: CompilerMessageCallback = CompilerMessageCallback {}
 ) : MessageCollector {
     /**
      * A thread-safe queue containing all recorded compiler messages.
      */
-    val messages: ConcurrentLinkedQueue<CompilerMessage> = ConcurrentLinkedQueue()
+    public val messages: ConcurrentLinkedQueue<CompilerMessage> = ConcurrentLinkedQueue()
 
     /**
      * Atomic flag indicating whether any error messages have been reported.
@@ -83,7 +83,7 @@ class RecordingMessageCollector internal constructor(
      * This method is intended for testing purposes only.
      */
     @TestOnly
-    fun printErrors() {
+    public fun printErrors() {
         val errors = messages.filter { it.severity.isError }
         if (errors.isEmpty()) return
         System.err.println("========== RAW COMPILER OUTPUT ==========")
@@ -104,7 +104,7 @@ class RecordingMessageCollector internal constructor(
      * This method is intended for testing purposes only.
      */
     @TestOnly
-    fun printAll() {
+    public fun printAll() {
         println("========== RAW COMPILER OUTPUT ==========")
         for (message in messages) {
             val location = message.location

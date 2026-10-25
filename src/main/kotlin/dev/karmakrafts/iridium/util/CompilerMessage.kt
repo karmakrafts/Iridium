@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
  * @property location Optional source location information where the message originated
  */
 @ConsistentCopyVisibility
-data class CompilerMessage internal constructor( // @formatter:off
+public data class CompilerMessage internal constructor( // @formatter:off
     val severity: CompilerMessageSeverity,
     val message: String,
     val location: CompilerMessageSourceLocation?
@@ -38,7 +38,7 @@ data class CompilerMessage internal constructor( // @formatter:off
  * A function type that receives a [CompilerMessage] and performs some action with it.
  * Used as a raw callback mechanism for compiler message handling.
  */
-typealias RawCompilerMessageCallback = (CompilerMessage) -> Unit
+public typealias RawCompilerMessageCallback = (CompilerMessage) -> Unit
 
 /**
  * A wrapper around [RawCompilerMessageCallback] that provides additional functionality.
@@ -48,7 +48,7 @@ typealias RawCompilerMessageCallback = (CompilerMessage) -> Unit
  */
 @Suppress("NOTHING_TO_INLINE")
 @JvmInline
-value class CompilerMessageCallback(val value: RawCompilerMessageCallback) {
+public value class CompilerMessageCallback(public val value: RawCompilerMessageCallback) {
     @PublishedApi
     internal inline operator fun plus(other: CompilerMessageCallback): CompilerMessageCallback =
         CompilerMessageCallback { message ->
@@ -57,14 +57,14 @@ value class CompilerMessageCallback(val value: RawCompilerMessageCallback) {
         }
 
     @PublishedApi
-    internal inline operator fun invoke(message: CompilerMessage) = value(message)
+    internal inline operator fun invoke(message: CompilerMessage): Unit = value(message)
 }
 
 /**
  * A function type that evaluates a [CompilerMessage] and returns a boolean result.
  * Used as a filtering mechanism for compiler messages.
  */
-typealias RawCompilerMessageFilter = (CompilerMessage) -> Boolean
+public typealias RawCompilerMessageFilter = (CompilerMessage) -> Boolean
 
 /**
  * A wrapper around [RawCompilerMessageFilter] that provides additional functionality.
@@ -75,7 +75,7 @@ typealias RawCompilerMessageFilter = (CompilerMessage) -> Boolean
  */
 @Suppress("NOTHING_TO_INLINE")
 @JvmInline
-value class CompilerMessageFilter(val value: RawCompilerMessageFilter) {
+public value class CompilerMessageFilter(public val value: RawCompilerMessageFilter) {
     @PublishedApi
     internal inline operator fun plus(other: CompilerMessageFilter): CompilerMessageFilter =
         CompilerMessageFilter { message ->

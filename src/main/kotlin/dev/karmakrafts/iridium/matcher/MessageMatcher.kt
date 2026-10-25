@@ -38,7 +38,7 @@ import dev.karmakrafts.iridium.util.CompilerMessage
  */
 @CompilerAssertionDsl
 @Suppress("NOTHING_TO_INLINE")
-class MessageMatcher @PublishedApi internal constructor( // @formatter:off
+public class MessageMatcher @PublishedApi internal constructor( // @formatter:off
     private val parentMatcher: IncompleteMessageMatcher
 ) { // @formatter:on
     /**
@@ -52,7 +52,7 @@ class MessageMatcher @PublishedApi internal constructor( // @formatter:off
      *
      * @param range The range of acceptable message counts
      */
-    inline infix fun between(range: IntRange) {
+    public inline infix fun between(range: IntRange) {
         this.range = range
     }
 
@@ -61,7 +61,7 @@ class MessageMatcher @PublishedApi internal constructor( // @formatter:off
      *
      * @param count The minimum number of expected messages
      */
-    inline infix fun atLeast(count: Int) {
+    public inline infix fun atLeast(count: Int) {
         range = count..range.last
     }
 
@@ -70,7 +70,7 @@ class MessageMatcher @PublishedApi internal constructor( // @formatter:off
      *
      * @param count The maximum number of expected messages
      */
-    inline infix fun atMost(count: Int) {
+    public inline infix fun atMost(count: Int) {
         range = range.first..count
     }
 
@@ -79,7 +79,7 @@ class MessageMatcher @PublishedApi internal constructor( // @formatter:off
      *
      * @param count The exact number of expected messages
      */
-    inline infix fun exactly(count: Int) {
+    public inline infix fun exactly(count: Int) {
         range = count..count
     }
 

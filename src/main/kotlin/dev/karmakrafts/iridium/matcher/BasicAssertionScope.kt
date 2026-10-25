@@ -23,11 +23,11 @@ import dev.karmakrafts.iridium.CompilerAssertionDsl
  * Provides context information for assertions to improve error messages.
  */
 @CompilerAssertionDsl
-abstract class BasicAssertionScope internal constructor() {
+public abstract class BasicAssertionScope internal constructor() {
     /**
      * The context string that will be included in assertion error messages.
      */
-    abstract val assertionContext: String
+    public abstract val assertionContext: String
 
     /**
      * Asserts that the receiver object equals the expected value.
@@ -36,7 +36,7 @@ abstract class BasicAssertionScope internal constructor() {
      * @param expected The value that the receiver should equal
      * @throws AssertionError if the receiver does not equal the expected value
      */
-    infix fun <T> T.shouldBe(expected: T) {
+    public infix fun <T> T.shouldBe(expected: T) {
         if (this == expected) return
         throw AssertionError("${assertionContext}\n\nExpected <$expected> but got <$this>")
     }
@@ -48,7 +48,7 @@ abstract class BasicAssertionScope internal constructor() {
      * @param unexpected The value that the receiver should not equal
      * @throws AssertionError if the receiver equals the unexpected value
      */
-    infix fun <T> T.shouldNotBe(unexpected: T) {
+    public infix fun <T> T.shouldNotBe(unexpected: T) {
         if (this != unexpected) return
         throw AssertionError("${assertionContext}\n\nDid not expect <$unexpected> but got <$this>")
     }
@@ -60,7 +60,7 @@ abstract class BasicAssertionScope internal constructor() {
      * @param expected The collection whose elements should all be present in the receiver
      * @throws AssertionError if the receiver does not contain all elements from the expected collection
      */
-    infix fun <T> Collection<T>.shouldContain(expected: Collection<T>) {
+    public infix fun <T> Collection<T>.shouldContain(expected: Collection<T>) {
         if (containsAll(expected)) return
         throw AssertionError("${assertionContext}\n\nExpected <$this> to contain <$expected>")
     }
@@ -72,7 +72,7 @@ abstract class BasicAssertionScope internal constructor() {
      * @param unexpected The collection whose elements should not all be present in the receiver
      * @throws AssertionError if the receiver contains all elements from the unexpected collection
      */
-    infix fun <T> Collection<T>.shouldNotContain(unexpected: Collection<T>) {
+    public infix fun <T> Collection<T>.shouldNotContain(unexpected: Collection<T>) {
         if (!containsAll(unexpected)) return
         throw AssertionError("${assertionContext}\n\nDid not expect <$this> to contain <$unexpected>")
     }

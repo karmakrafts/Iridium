@@ -50,7 +50,7 @@ import org.jetbrains.kotlin.ir.util.render
 
 @OptIn(UnsafeDuringIrConstructionAPI::class)
 @CompilerAssertionDsl
-class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @formatter:off
+public class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @formatter:off
     private val scopeName: String,
     private val depth: Int,
     private val type: TYPE,
@@ -72,7 +72,7 @@ class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @forma
      * @param expected The expected IR type to match against
      * @throws AssertionError if the types don't match, with a detailed error message showing the IR tree
      */
-    fun type(expected: IrType) {
+    public fun type(expected: IrType) {
         assert(type.type == expected) {
             "Expected type ${expected.render()} but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
         }
@@ -85,7 +85,7 @@ class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @forma
      * @param expected The expected IR type to strictly match against
      * @throws AssertionError if the types don't match exactly, with a detailed error message showing the IR tree
      */
-    fun strictType(expected: IrType) {
+    public fun strictType(expected: IrType) {
         assert(type == expected) {
             "Expected type ${expected.render()} but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
         }
@@ -97,7 +97,7 @@ class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @forma
      * @param name The expected name of the type parameter
      * @throws AssertionError if the type is not a type parameter or has a different name
      */
-    fun typeParameter(name: String) {
+    public fun typeParameter(name: String) {
         assert(type.isTypeParameter() && (type.classifierOrFail as IrTypeParameterSymbol).owner.name.asString() == name) {
             "Expected type parameter '$name' but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
         }
@@ -108,7 +108,7 @@ class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @forma
      *
      * @throws AssertionError if the type is not nullable, with a detailed error message showing the IR tree
      */
-    fun nullable() {
+    public fun nullable() {
         assert(type.isNullable()) {
             "Expected type to be nullable but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
         }
@@ -119,50 +119,50 @@ class IrTypeMatcher<TYPE : IrType> @PublishedApi internal constructor( // @forma
      *
      * @throws AssertionError if the type is nullable, with a detailed error message showing the IR tree
      */
-    fun nonNull() {
+    public fun nonNull() {
         assert(!type.isNullable()) {
             "Expected type to be nonnull but got ${type.render()} in:\n\n${parentElement.renderIrTree()}\n"
         }
     }
 
-    fun unit() = type(types.unitType)
-    fun any() = type(types.anyType)
-    fun nothing() = type(types.nothingType)
+    public fun unit(): Unit = type(types.unitType)
+    public fun any(): Unit = type(types.anyType)
+    public fun nothing(): Unit = type(types.nothingType)
 
-    fun string() = type(types.stringType)
-    fun stringArray() = type(types.stringType.array())
+    public fun string(): Unit = type(types.stringType)
+    public fun stringArray(): Unit = type(types.stringType.array())
 
-    fun function() = type(types.functionClass.defaultType)
-    fun kFunction() = type(types.kFunctionClass.defaultType)
-    fun kProperty() = type(types.kPropertyClass.defaultType)
+    public fun function(): Unit = type(types.functionClass.defaultType)
+    public fun kFunction(): Unit = type(types.kFunctionClass.defaultType)
+    public fun kProperty(): Unit = type(types.kPropertyClass.defaultType)
 
-    fun byte() = type(types.byteType)
-    fun short() = type(types.shortType)
-    fun int() = type(types.intType)
-    fun long() = type(types.longType)
+    public fun byte(): Unit = type(types.byteType)
+    public fun short(): Unit = type(types.shortType)
+    public fun int(): Unit = type(types.intType)
+    public fun long(): Unit = type(types.longType)
 
-    fun uByte() = type(type(UnsignedType.UBYTE))
-    fun uShort() = type(type(UnsignedType.USHORT))
-    fun uInt() = type(type(UnsignedType.UINT))
-    fun uLong() = type(type(UnsignedType.ULONG))
+    public fun uByte(): Unit = type(type(UnsignedType.UBYTE))
+    public fun uShort(): Unit = type(type(UnsignedType.USHORT))
+    public fun uInt(): Unit = type(type(UnsignedType.UINT))
+    public fun uLong(): Unit = type(type(UnsignedType.ULONG))
 
-    fun float() = type(types.floatType)
-    fun double() = type(types.doubleType)
-    fun char() = type(types.charType)
-    fun boolean() = type(types.booleanType)
+    public fun float(): Unit = type(types.floatType)
+    public fun double(): Unit = type(types.doubleType)
+    public fun char(): Unit = type(types.charType)
+    public fun boolean(): Unit = type(types.booleanType)
 
-    fun byteArray() = type(types.byteType.array())
-    fun shortArray() = type(types.shortType.array())
-    fun intArray() = type(types.intType.array())
-    fun longArray() = type(types.longType.array())
+    public fun byteArray(): Unit = type(types.byteType.array())
+    public fun shortArray(): Unit = type(types.shortType.array())
+    public fun intArray(): Unit = type(types.intType.array())
+    public fun longArray(): Unit = type(types.longType.array())
 
-    fun uByteArray() = type(type(UnsignedType.UBYTE).array())
-    fun uShortArray() = type(type(UnsignedType.USHORT).array())
-    fun uIntArray() = type(type(UnsignedType.UINT).array())
-    fun uLongArray() = type(type(UnsignedType.ULONG).array())
+    public fun uByteArray(): Unit = type(type(UnsignedType.UBYTE).array())
+    public fun uShortArray(): Unit = type(type(UnsignedType.USHORT).array())
+    public fun uIntArray(): Unit = type(type(UnsignedType.UINT).array())
+    public fun uLongArray(): Unit = type(type(UnsignedType.ULONG).array())
 
-    fun floatArray() = type(types.floatType.array())
-    fun doubleArray() = type(types.doubleType.array())
-    fun charArray() = type(types.charType.array())
-    fun booleanArray() = type(types.booleanType.array())
+    public fun floatArray(): Unit = type(types.floatType.array())
+    public fun doubleArray(): Unit = type(types.doubleType.array())
+    public fun charArray(): Unit = type(types.charType.array())
+    public fun booleanArray(): Unit = type(types.booleanType.array())
 }

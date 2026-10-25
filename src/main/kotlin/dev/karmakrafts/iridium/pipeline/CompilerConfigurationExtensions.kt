@@ -36,6 +36,6 @@ import java.io.File
  * @param T The type whose location should be added to the classpath
  */
 @TestOnly
-inline fun <reified T : Any> CompilerConfiguration.addJvmClasspathRootByType() {
+public inline fun <reified T : Any> CompilerConfiguration.addJvmClasspathRootByType() {
     addJvmClasspathRoot(File(T::class.java.protectionDomain.codeSource.location.toURI()))
 }

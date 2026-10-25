@@ -32,7 +32,7 @@ import kotlin.contracts.contract
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class CompilerTestDsl
+public annotation class CompilerTestDsl
 
 /**
  * Marks classes and functions that are part of the compiler assertion DSL.
@@ -43,19 +43,19 @@ annotation class CompilerTestDsl
 @DslMarker
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class CompilerAssertionDsl
+public annotation class CompilerAssertionDsl
 
 @CompilerAssertionDsl
-sealed interface CompilerAssertionScope {
+public sealed interface CompilerAssertionScope {
     /**
      * Provides access to the compiler asserter for specifying expectations about compiler messages.
      */
-    val compiler: CompilerAsserter
+    public val compiler: CompilerAsserter
 
     /**
      * Provides access to the result asserter for specifying expectations about compilation results.
      */
-    val result: CompileResultAsserter
+    public val result: CompileResultAsserter
 }
 
 /**
@@ -66,8 +66,8 @@ sealed interface CompilerAssertionScope {
  * and assertions about compilation results.
  */
 @CompilerTestDsl
-class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionScope(), CompilerAssertionScope {
-    companion object {
+public class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionScope(), CompilerAssertionScope {
+    public companion object {
         private const val DEFAULT_FILE_NAME: String = "test.kt"
     }
 
@@ -91,7 +91,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      * This property holds the source code that will be passed to the compiler pipeline
      * during test evaluation. It can be set using the [source] method.
      */
-    var source: String = ""
+    public var source: String = ""
         private set
 
     /**
@@ -101,13 +101,13 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      * when compiling the source code. It defaults to "test.kt" but can be changed
      * to simulate compilation of files with different names.
      */
-    var fileName: String = DEFAULT_FILE_NAME
+    public var fileName: String = DEFAULT_FILE_NAME
 
     /**
      * If true, the test will print all of its recorded compiler messages
      * to the standard out stream after compilation.
      */
-    var printCompilerMessages: Boolean = false
+    public var printCompilerMessages: Boolean = false
 
     /**
      * The Kotlin source code split into individual lines.
@@ -116,7 +116,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      * which can be useful for line-by-line processing or for assertions that need to
      * reference specific lines of code.
      */
-    inline val sourceLines: List<String>
+    public inline val sourceLines: List<String>
         get() = source.split('\n')
 
     /**
@@ -127,7 +127,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      *
      * @param source The Kotlin source code as a string
      */
-    fun source(@Language("kotlin") source: String) {
+    public fun source(@Language("kotlin") source: String) {
         this.source = source
     }
 
@@ -136,7 +136,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      *
      * @param block A lambda that configures the compiler pipeline
      */
-    inline fun pipeline(crossinline block: CompilerPipelineSpec) {
+    public inline fun pipeline(crossinline block: CompilerPipelineSpec) {
         val previousSpec = pipelineSpec
         pipelineSpec = {
             previousSpec()
@@ -157,7 +157,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      * @param block A lambda with receiver that defines default test specifications
      * @see evaluate
      */
-    inline fun default(crossinline block: CompilerAssertionScope.() -> Unit) {
+    public inline fun default(crossinline block: CompilerAssertionScope.() -> Unit) {
         val previousSpec = defaultAssertions
         defaultAssertions = {
             previousSpec()
@@ -171,7 +171,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      * This method creates a compiler pipeline according to the configured specification,
      * compiles the source code, and applies all registered assertions to the compilation result.
      */
-    fun evaluate() {
+    public fun evaluate() {
         if (!areDefaultAssertionsApplied) {
             defaultAssertions()
             areDefaultAssertionsApplied = true
@@ -197,7 +197,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      * and result asserters, allowing the test scope to be reused for a new test without
      * carrying over previous assertions.
      */
-    fun resetAssertions() {
+    public fun resetAssertions() {
         compiler.reset()
         result.reset()
         areDefaultAssertionsApplied = false
@@ -213,7 +213,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
      *
      * After calling this method, the test scope can be reused as if it were newly created.
      */
-    fun reset() {
+    public fun reset() {
         pipelineSpec = {}
         fileName = DEFAULT_FILE_NAME
         resetAssertions() // Also resets areDefaultAssertionsApplied
@@ -230,7 +230,7 @@ class CompilerTestScope @PublishedApi internal constructor() : BasicAssertionSco
  *
  * @param scope A lambda with receiver that configures the test scope
  */
-inline fun setupCompilerTest(scope: CompilerTestScope.() -> Unit) {
+public inline fun setupCompilerTest(scope: CompilerTestScope.() -> Unit) {
     contract {
         callsInPlace(scope, InvocationKind.EXACTLY_ONCE)
     }
@@ -247,7 +247,7 @@ inline fun setupCompilerTest(scope: CompilerTestScope.() -> Unit) {
  * @param scope A lambda with receiver that configures the test scope
  * @see CompilerTestScope.evaluate
  */
-inline fun runCompilerTest(scope: CompilerTestScope.() -> Unit) {
+public inline fun runCompilerTest(scope: CompilerTestScope.() -> Unit) {
     contract {
         callsInPlace(scope, InvocationKind.EXACTLY_ONCE)
     }

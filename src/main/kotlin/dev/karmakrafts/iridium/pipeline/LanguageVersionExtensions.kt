@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
  * @return A new [LanguageVersionSettingsImpl] with the specified language and API versions
  */
 @TestOnly
-infix fun LanguageVersion.withApi(version: ApiVersion): LanguageVersionSettingsImpl = LanguageVersionSettingsImpl(
-    languageVersion = this, apiVersion = version
-)
+public infix fun LanguageVersion.withApi(version: ApiVersion): LanguageVersionSettingsImpl =
+    LanguageVersionSettingsImpl(
+        languageVersion = this, apiVersion = version
+    )
