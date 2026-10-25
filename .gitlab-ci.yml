@@ -8,8 +8,8 @@ workflow:
 
 stages:
   - check_changelog
-  - build
   - security
+  - build
   - publish
   - release
   - update_changelog
