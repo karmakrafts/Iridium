@@ -121,7 +121,7 @@ class CompilerSmokeTest {
     @Test
     fun `Compile simple Kotlin program with newer API`() = runCompilerTest {
         pipeline {
-            languageVersionSettings = LanguageVersion.KOTLIN_2_4 withApi ApiVersion.KOTLIN_2_4
+            languageVersionSettings = LanguageVersion.KOTLIN_2_5 withApi ApiVersion.KOTLIN_2_5
         }
         checkDefaultProgram()
     }
