@@ -3,10 +3,10 @@
 ### Changed
 
 - Updated to Gradle 9.8.2
-- Updated to Karma Conventions 1.23.0.317-SNAPSHOT
+- Updated to Karma Conventions 1.23.0.318-SNAPSHOT
 - Updated to NMCP 1.6.2
 - Updated to Kotlin 2.5.0-Beta2
-- Updated to Dokka 2.3.0-Beta
+- Updated to Dokka 2.3.0
 - Updated to OSHI 7.7.3
 
 ## [1.14.0]
