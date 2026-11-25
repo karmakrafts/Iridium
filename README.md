@@ -1,12 +1,12 @@
 # Iridium
 
 [![](https://git.karmakrafts.dev/kk/iridium/badges/master/pipeline.svg)](https://git.karmakrafts.dev/kk/iridium/-/pipelines)
-[![](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo.maven.apache.org%2Fmaven2%2Fdev%2Fkarmakrafts%2Firidium%2Firidium%2Fmaven-metadata.xml
-)](https://git.karmakrafts.dev/kk/iridium/-/packages)
-[![](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Fdev%2Fkarmakrafts%2Firidium%2Firidium%2Fmaven-metadata.xml
-)](https://git.karmakrafts.dev/kk/iridium/-/packages)
-[![](https://img.shields.io/badge/2.4.10-blue?logo=kotlin&label=kotlin)](https://kotlinlang.org/)
 [![](https://img.shields.io/badge/documentation-black?logo=kotlin)](https://docs.karmakrafts.dev/iridium)
+
+| Release | Kotlin |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| [![](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo.maven.apache.org%2Fmaven2%2Fdev%2Fkarmakrafts%2Firidium%2Firidium%2Fmaven-metadata.xml)](https://git.karmakrafts.dev/kk/iridium/-/packages) | [![](https://img.shields.io/badge/2.4.10-blue?logo=kotlin&label=kotlin)](https://kotlinlang.org/) |
+| [![](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Fdev%2Fkarmakrafts%2Firidium%2Firidium%2Fmaven-metadata.xml)](https://git.karmakrafts.dev/kk/iridium/-/packages) | [![](https://img.shields.io/badge/2.5.0--RC2-blue?logo=kotlin&label=kotlin)](https://kotlinlang.org/) |
 
 Iridium is an in-process compiler testing framework for Kotlin using the Kotlin embeddable compiler and Kotlin Test.  
 It allows testing compiler behaviour and FIR/IR compiler plugins.  
